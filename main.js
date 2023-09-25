@@ -6,7 +6,7 @@ const db = require('./models');
 
 // const { User } = require('./models');
 // const UserClass = require('./controllers/user')
-const userRouter = require('./routers/user.router');
+const accountRouter = require('./routers/account.router');
 
 // require('dotenv').config();
 
@@ -37,7 +37,7 @@ const userRouter = require('./routers/user.router');
 // init();
 app.use(express.json())
 
-app.use('/user', userRouter);
+app.use('/account', accountRouter);
 
 // app.get('/', async (request, response) => {
 // 	const { verifyEmail } = require('./controllers/user.controller');
