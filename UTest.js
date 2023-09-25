@@ -1,5 +1,4 @@
 const request = require('supertest');
-const app = require('../path_to_your_main_app_file'); // Adjust the path to your main app file
 const sequelizeMock = require('sequelize-mock');
 const dbMock = new sequelizeMock();
 
