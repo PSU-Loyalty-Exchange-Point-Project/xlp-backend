@@ -9,11 +9,6 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.UUID,
             defaultValue: DataTypes.UUIDV4
         },
-        token: {
-            type: DataTypes.UUID,
-            allowNull: false,
-            defaultValue: DataTypes.UUIDV4
-        },
         expiresAt: {
             type: DataTypes.DATE,
             allowNull: false

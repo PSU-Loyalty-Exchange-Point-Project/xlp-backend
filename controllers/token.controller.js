@@ -1,14 +1,41 @@
-const { User, Token } = require('../models');
+const { request } = require('express');
+const { Token, Sequelize } = require('../models');
 
-const  createEmailVerificationToken = async (request, response) =>  {
-    // DELETE
+const  createEmailVerificationToken = async (userObject) =>  {
     try {
-        var user = await User.findOne({ where: {id: request.body.userId} });    
-        var token = await Token.create({expiresAt: new Date()});
+        let expireDate = new Date(new Date().getTime() + (0.5 * 60 * 60 * 1000));
+
+        var token = await Token.create({expiresAt: expireDate});
     
-        user.addToken(token);
-        response.send({success: true, route: request.originalUrl});
+        userObject.addToken(token);
+        return token.id;
+
     } catch (error) {
-        response.status(400).send(error.details);
+        console.error(error);
+        return null;
     }
 };
+
+const verifyToken = async (tokenId, userId) => {
+    try {
+        let tokenObject = await Token.findOne(
+            {
+                where: {
+                    id: tokenId,
+                    UserId: userId,
+                    expiresAt: {
+                        [Sequelize.Op.gt]: new Date()
+                    }
+                }
+            });
+        
+        tokenObject.expiresAt = new Date();
+        await tokenObject.save();
+
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+module.exports = { verifyToken, createEmailVerificationToken }

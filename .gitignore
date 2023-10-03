@@ -1,3 +1,5 @@
 node_modules
 migrations/
 *.sqlite
+.env
+.DS_Store

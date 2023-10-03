@@ -40,8 +40,8 @@ Object.keys(db).forEach(modelName => {
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-
 function applyExtraSetup(sequelize) {
+  
 	const { User, Token } = sequelize.models;
 
 	User.hasMany(Token);

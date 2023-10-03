@@ -2,8 +2,9 @@
   "development": {
     "storage": "./db.sqlite",
     "dialect": "sqlite",
-    "logQueryParameters": true,
-    "benchmark": true
+    "logQueryParameters": false,
+    "benchmark": true,
+    "logging": true
   },
   "test": {
     "username": "root",

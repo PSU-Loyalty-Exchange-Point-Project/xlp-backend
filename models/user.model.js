@@ -16,6 +16,13 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
             unique: true,
+            set(value) {
+                try {
+                    this.setDataValue('email', value.toLowerCase());
+                } catch (error) {
+                    console.error(error);
+                }
+            },
             validate: {
                 isEmail: {
                     msg: "Must be a valid email address",
@@ -24,6 +31,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         password: {
             type: DataTypes.STRING,
+            allowNull: false,
             set(value) {
                 try {
                     let hash = bcrypt.hashSync(value.toString(), saltRounds);
@@ -32,6 +40,11 @@ module.exports = (sequelize, DataTypes) => {
                     console.error(error);
                 }
             }
+        },
+        phoneNumber: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
         },
         status: {
             type: DataTypes.ENUM(
