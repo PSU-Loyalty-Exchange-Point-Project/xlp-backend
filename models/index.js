@@ -42,9 +42,10 @@ db.Sequelize = Sequelize;
 
 function applyExtraSetup(sequelize) {
   
-	const { User, Token } = sequelize.models;
+	const { User, Token, Wallet } = sequelize.models;
 
 	User.hasMany(Token);
+  Wallet.belongsTo(User);
 }
 
 applyExtraSetup(sequelize)
