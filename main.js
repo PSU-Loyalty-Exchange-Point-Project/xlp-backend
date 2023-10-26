@@ -23,7 +23,6 @@ const termsRoutes = require('./routers/terms.router');
 
 // ... (other code)
 
-app.use('/', termsRoutes);
 
 
 
@@ -57,6 +56,9 @@ app.use(express.json())
 
 app.use('/user', userRouter);
 app.use('/account', accountRouter);
+
+app.use('/terms', termsRoutes);
+
 
 // app.get('/', async (request, response) => {
 // 	const { verifyEmail } = require('./controllers/user.controller');
