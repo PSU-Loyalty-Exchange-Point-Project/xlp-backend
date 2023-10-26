@@ -1,6 +1,9 @@
 const bcrypt = require('bcrypt');
 const { User } = require('../models');
 
+const getLogin =  (request, response) => {
+  response.render('login');
+}
 
 
 const postLogin = async (request, response) => {
@@ -19,4 +22,4 @@ const postLogin = async (request, response) => {
       }
 }
 
-module.exports = { postLogin };
+module.exports = { postLogin, getLogin };

@@ -1,15 +1,33 @@
 const express = require('express');
 const app = express();
-const PORT = 8080;
+const PORT = 3000;
+const cors = require('cors');
+
 
 const db = require('./models');
+
+app.use("/public",express.static(__dirname + "/public"));
 
 // const { User } = require('./models');
 // const UserClass = require('./controllers/user')
 const userRouter = require('./routers/user.router');
+const accountRouter = require('./routers/account.router');
+app.use(cors({ optionsSuccessStatus:200}));
+const path = require("path");
+const cookieParser = require('cookie-parser');
+
+app.set('views', path.join(__dirname,'views'));
+app.set('view engine','ejs');
+
+const termsRoutes = require('./routers/terms.router');
+
+// ... (other code)
+
+app.use('/', termsRoutes);
+
+
 
 // require('dotenv').config();
-
 
 
 // async function assertDatabaseConnectionOk() {
@@ -38,6 +56,7 @@ const userRouter = require('./routers/user.router');
 app.use(express.json())
 
 app.use('/user', userRouter);
+app.use('/account', accountRouter);
 
 // app.get('/', async (request, response) => {
 // 	const { verifyEmail } = require('./controllers/user.controller');

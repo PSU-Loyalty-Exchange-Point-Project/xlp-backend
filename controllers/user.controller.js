@@ -1,9 +1,10 @@
 const bcrypt = require('bcrypt');
 const { User } = require('../models');
+const { response } = require('express');
 
 
 const getCreateUser = (request, response) =>  {
-    
+    response.render('signup');
 
     response.send({success: true, route: request.originalUrl})
 };
@@ -16,13 +17,15 @@ const  getAllUsers = async (request, response) =>  {
 
 const postCreateUser = (request, response) =>  {
     User.create(
-        {email: request.body.email, password: request.body.password}
+        {email: request.body.email, password: request.body.password} //
         ).catch((error) => {
             console.error(error);
             response.status(400)
         });
     response.send({success: true})
 };
+
+
 
 const verifyEmail = (email, token) =>  {
     let user = User.findOne(
@@ -44,7 +47,10 @@ let checkPassword = (password, passwordHash) => {
     } catch (error) {
         console.error(error);
     }
+    response.redirect('/account/login')
 };
+
+
 
 module.exports = {getCreateUser, postCreateUser, getAllUsers, checkPassword, verifyEmail};
 
