@@ -8,6 +8,10 @@ const { createWallet } = require('./wallet.controller');
 
 dotenv.config();
 
+const getLogin =  (request, response) => {
+  response.render('login');
+}
+
 const isAuthorized = async (request, response, next) => {
 	let { access_token } = request.body;
 	
@@ -135,4 +139,4 @@ let tokenOptions = {
 let generateAccessToken = (userId) => {
 	return jwt.sign(userId, process.env.TOKEN_SECRET, { expiresIn: `1m` });
 }
-module.exports = { postRegister, postLogin, postLogout, isAuthorized, checkPassword, getActivateAccount };
+module.exports = { postRegister, postLogin, getLogin, postLogout, isAuthorized, checkPassword, getActivateAccount };

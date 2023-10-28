@@ -10,23 +10,37 @@ dotenv.config();
 
 const tokenMaxAgeMs = parseInt(process.env.TOKEN_AGE_DAYS) * 24  * 3600000; 
 const app = express();
-const PORT = 8080;
+const PORT = 3000;
+const cors = require('cors');
+
 
 const db = require('./models');
 
-app.use(cookieParser());
+app.use("/public",express.static(__dirname + "/public"));
+
+// const { User } = require('./models');
+// const UserClass = require('./controllers/user')
+const userRouter = require('./routers/user.router');
+const accountRouter = require('./routers/account.router');
+app.use(cors({ optionsSuccessStatus:200}));
+const path = require("path");
+const cookieParser = require('cookie-parser');
+
+app.set('views', path.join(__dirname,'views'));
+app.set('view engine','ejs');
+
+const termsRoutes = require('./routers/terms.router');
+
+// ... (other code)
+
+
+
 
 // var SequelizeStore = require("connect-session-sequelize")(session.Store);
 const accountRouter = require('./routers/account.router');
 const walletRouter = require('./routers/wallet.router');
 const transactionRouter = require('./routers/transaction.router');
 // require('dotenv').config();
-
-
-
-// function generateAccessToken(userId) {
-// 	return jwt.sign(userId, process.env.TOKEN_SECRET, { expiresIn: `${process.env.TOKEN_AGE_DAYS}d` });
-// }
 
 
 // async function assertDatabaseConnectionOk() {
@@ -54,17 +68,11 @@ const transactionRouter = require('./routers/transaction.router');
 // init();
 app.use(express.json())
 
-// app.use(session({
-// 	secret: "very secret key do not lose it",
-// 	resave: false,
-// 	store: new SequelizeStore({
-// 		db: db.sequelize,
-// 	}),
-// 	saveUninitialized: false,
-// 	cookie: {
-// 		maxAge: 720 * 3600000
-// 	}
-// }))
+app.use('/user', userRouter);
+app.use('/account', accountRouter);
+
+app.use('/terms', termsRoutes);
+
 
 app.use('/account', accountRouter);
 app.use('/wallet', walletRouter);
