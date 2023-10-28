@@ -18,6 +18,8 @@ app.use(cookieParser());
 
 // var SequelizeStore = require("connect-session-sequelize")(session.Store);
 const accountRouter = require('./routers/account.router');
+const walletRouter = require('./routers/wallet.router');
+const transactionRouter = require('./routers/transaction.router');
 // require('dotenv').config();
 
 
@@ -65,13 +67,45 @@ app.use(express.json())
 // }))
 
 app.use('/account', accountRouter);
+app.use('/wallet', walletRouter);
+app.use('/transaction', transactionRouter);
 
-app.get('/', (request, response) => {
+let { recomputeWallet } = require('./controllers/transaction.controller')
+app.get('/', async (request, response) => {
+	let { walletId, page = 0 } = request.query;
+	// // let transaction = await db.sequelize.transaction();
+	// let transaction;
 
+	// // try {
+	// 	transaction = await db.sequelize.transaction();
+		let wallet = await db.Wallet.findOne({ where: { id: walletId } });
+		wallet.balance = wallet.balance - 110;
+		wallet.save();
+	// 	let wallets = await db.Wallet.findOne({ where: { id: walletId }, skipLocked: true , transaction });
+		
+	// 	console.log(wallets);
+		// db.Wallet.update({ balance: (wallet.balance + 1) }, { where: { id: walletId } });
+		
+	// 	recomputeWallet(walletId)
+		
+
+	// 	await transaction.commit();
+
+		
+	//   } catch (error) {
+	  
+	// 	// If the execution reaches this line, an error was thrown.
+	// 	// We rollback the transaction.
+	// 	await transaction.rollback();
+	  
+	//   }
+	// console.log(wallets)
+	// await t.commit();
+	// console.log();
 	return response.send({ message: "Main root" });
 });
 
-db.sequelize.sync({ force: true}).then((request) => {
+db.sequelize.sync({ force: false }).then((request) => {
 	app.listen(PORT, () => {
 		console.log(`Express server started on port ${PORT}.`);
 	});

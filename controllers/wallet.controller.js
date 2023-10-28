@@ -1,11 +1,11 @@
 const { request } = require('express');
 const { Wallet } = require('../models');
-const { createTransaction } = require('./transaction.controller');
+const { createTransaction, recomputeWallet } = require('./transaction.controller');
 
 
 const createWallet = async (userObject) =>  {
     try {
-        let wallet = await Wallet.create({ balance: 100 });
+        let wallet = await Wallet.create();
         wallet.setUser(userObject);
         // userObject.setWallet(wallet);
         
@@ -17,16 +17,27 @@ const createWallet = async (userObject) =>  {
     }
 };
 
-const viewBalance = async (userId) => {
+const computeBalance = async (walletId) => {
     try {
-        let wallet = await Wallet.findOne({ where: { UserId: userId } });
-        if (wallet == null)
-            throw "Wallet does not exist"
+        let wallet = await Wallet.findOne({ where: { id: walletId } });
         
-        return wallet.balance;    
+        if (!wallet)
+            throw "Wallet not found"
+
+        
+        
     } catch (error) {
         return error;
     }
+
+}
+
+const viewBalance = async (userId) => {
+    let wallet = await Wallet.findOne({ where: { UserId: userId } });
+    if (!wallet)
+        return null;
+    
+    return { id: wallet.id, balance: wallet.balance }
 }
 
 const deductBalance = async (userId, amount) => {
@@ -45,6 +56,8 @@ const deductBalance = async (userId, amount) => {
 
         await createTransaction(amount, "deduct", null, wallet);
 
+        recomputeWallet(wallet.id);
+
         return wallet.balance;    
     } catch (error) {
 
@@ -59,30 +72,38 @@ const addBalance = async (userId, amount) => {
         
         if (wallet == null)
             throw "Wallet does not exist"
-        
+
         wallet.balance = wallet.balance + amount;
+        console.log('#1')
+        if (!Number.isInteger(wallet.balance))
+            throw "Number must be an integer";
         
+        console.log('#2')
         wallet.save();
+    
 
         await createTransaction(amount, "gain", null, wallet);
 
+        recomputeWallet(wallet.id);
+
         return wallet.balance;    
     } catch (error) {
-
+        console.log(error);
         await createTransaction(amount, "fail", error, wallet);
-        return error;
+        return { success: false, message: error };
     }
 }
 
-const getUserBalance = async (request, response) => {
+const getUserWallet = async (request, response) => {
     try {
         let { userId } = request.query;
         
-        let balance = await viewBalance(userId);
-        if (typeof balance === typeof "")
-            throw balance;
+        let wallet = await viewBalance(userId);
 
-        return response.send({ "user": userId, "balance": balance });
+        if (!wallet)
+            throw "Wallet no found";
+
+        return response.send({ "useId": userId, "wallet": { "id": wallet.id, "balance": wallet.balance }});
     } catch (error) {
 
         return response.status(400).send({ message: error });
@@ -108,9 +129,12 @@ const postAddBalance = async (request, response) => {
     try {
         let { userId, amount } = request.body;
         
-        let newBalance = await addBalance(userId, amount);
-        if (typeof newBalance === typeof "")
-            throw newBalance;
+        let ss = await addBalance(userId, amount);
+
+        // print(addBalance)
+        // if (typeof newBalance )
+        //     throw newBalance;
+
 
         return response.send({ "user": userId, "balance": newBalance, "deductedAmount": amount });
     } catch (error) {
@@ -119,4 +143,4 @@ const postAddBalance = async (request, response) => {
     }
 }
 
-module.exports = { createWallet, getUserBalance, postDeductBalance, postAddBalance }
+module.exports = { createWallet, getUserWallet, postDeductBalance, postAddBalance }

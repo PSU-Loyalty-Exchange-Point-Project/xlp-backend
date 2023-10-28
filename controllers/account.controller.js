@@ -3,7 +3,8 @@ const { response } = require('express');
 const { User } = require('../models');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
-const { verifyToken, createEmailVerificationToken } = require('./token.controller')
+const { verifyToken, createEmailVerificationToken } = require('./token.controller');
+const { createWallet } = require('./wallet.controller');
 
 dotenv.config();
 
@@ -31,7 +32,7 @@ const postRegister = async (request, response) => {
 
 	try {
 		let user = await User.create({ email: email.toString(), password: password.toString(), phoneNumber: phoneNumber.toString() });
-
+		
 		let tokenId = await createEmailVerificationToken(user);
 		let uid = btoa(user.id);
 
@@ -94,6 +95,7 @@ const getActivateAccount = async (request, response) => {
 			throw "Token is invalid";
 		
 		activateAccount(user);
+		createWallet(user);
 		return response.status(200).send({ message: "Email verified successfully" });
 		
 	} catch (error) {
