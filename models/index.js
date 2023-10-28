@@ -40,11 +40,13 @@ Object.keys(db).forEach(modelName => {
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-
 function applyExtraSetup(sequelize) {
-	const { User, Token } = sequelize.models;
+  
+	const { User, Token, Wallet, Transaction } = sequelize.models;
 
 	User.hasMany(Token);
+  Wallet.belongsTo(User);
+  Wallet.hasMany(Transaction);
 }
 
 applyExtraSetup(sequelize)

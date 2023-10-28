@@ -3,10 +3,15 @@ const router = express.Router();
 
 const accountController = require('../controllers/account.controller');
 
-router.get('/login', accountController.getLogin);           
+router.post('/register', accountController.postRegister);
+
+router.get('/activate/:uid/:token', accountController.getActivateAccount);
+
 router.post('/login', accountController.postLogin);         
 
-// router.get('/logout', accountController.getLogout);         
+router.post('/logout', accountController.postLogout);         
+
+router.post('/check-authorization', accountController.isAuthorized);         
 
 // router.get('/profile', accountController.getProfile);      
 // router.post('/profile', accountController.postProfile);     
