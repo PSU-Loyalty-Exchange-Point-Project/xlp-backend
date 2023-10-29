@@ -1,47 +1,35 @@
-const { request, response } = require('express');
 const express = require('express');
 // const session = require('express-session');
-const jwt = require('jsonwebtoken');
+// const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
-const cookieParser = require('cookie-parser');
 
-// get config vars
+// // get config vars
 dotenv.config();
 
 const tokenMaxAgeMs = parseInt(process.env.TOKEN_AGE_DAYS) * 24  * 3600000; 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT;
 const cors = require('cors');
-
+const fs = require('fs');
 
 const db = require('./models');
 
-app.use("/public",express.static(__dirname + "/public"));
+// var bodyParser = require('body-parser')
+// app.use(bodyParser.json())
+app.use(express.urlencoded({ extended: true }));
 
-// const { User } = require('./models');
-// const UserClass = require('./controllers/user')
-const userRouter = require('./routers/user.router');
+app.use("/public",express.static(__dirname + "/public"));
 const accountRouter = require('./routers/account.router');
 app.use(cors({ optionsSuccessStatus:200}));
-const path = require("path");
 const cookieParser = require('cookie-parser');
-
-app.set('views', path.join(__dirname,'views'));
-app.set('view engine','ejs');
-
-const termsRoutes = require('./routers/terms.router');
-
-// ... (other code)
-
-
-
-
 // var SequelizeStore = require("connect-session-sequelize")(session.Store);
-const accountRouter = require('./routers/account.router');
 const walletRouter = require('./routers/wallet.router');
 const transactionRouter = require('./routers/transaction.router');
 // require('dotenv').config();
 
+
+const { viewBalance } = require('./controllers/wallet.controller');
+const { viewTransactionList } = require('./controllers/transaction.controller');
 
 // async function assertDatabaseConnectionOk() {
 // 	console.log(`Checking database connection...`);
@@ -68,52 +56,43 @@ const transactionRouter = require('./routers/transaction.router');
 // init();
 app.use(express.json())
 
-app.use('/user', userRouter);
-app.use('/account', accountRouter);
-
-app.use('/terms', termsRoutes);
-
-
 app.use('/account', accountRouter);
 app.use('/wallet', walletRouter);
 app.use('/transaction', transactionRouter);
 
 let { recomputeWallet } = require('./controllers/transaction.controller')
+
+let countryCodesObjectsList = JSON.parse(fs.readFileSync('./staticData/countryCodes.json'));
+let countryCodeDialCodeList = []
+
 app.get('/', async (request, response) => {
-	let { walletId, page = 0 } = request.query;
-	// // let transaction = await db.sequelize.transaction();
-	// let transaction;
-
-	// // try {
-	// 	transaction = await db.sequelize.transaction();
-		let wallet = await db.Wallet.findOne({ where: { id: walletId } });
-		wallet.balance = wallet.balance - 110;
-		wallet.save();
-	// 	let wallets = await db.Wallet.findOne({ where: { id: walletId }, skipLocked: true , transaction });
-		
-	// 	console.log(wallets);
-		// db.Wallet.update({ balance: (wallet.balance + 1) }, { where: { id: walletId } });
-		
-	// 	recomputeWallet(walletId)
-		
-
-	// 	await transaction.commit();
-
-		
-	//   } catch (error) {
-	  
-	// 	// If the execution reaches this line, an error was thrown.
-	// 	// We rollback the transaction.
-	// 	await transaction.rollback();
-	  
-	//   }
-	// console.log(wallets)
-	// await t.commit();
-	// console.log();
-	return response.send({ message: "Main root" });
+	// countryCodesObjectsList.forEach((countryCodeObject) => {
+	// 	countryCodeDialCodeList.push(countryCodeObject.dial_code);
+	// });
+	// console.log(countryCodeDialCodeList);
+	// console.log(countryCodeDialCodeList.includes("+966"));
+	// // console.log(countryCodesList.length);
+	// return response.send({ message: "Main root" });
 });
 
-db.sequelize.sync({ force: false }).then((request) => {
+app.get('/dashboard', async (request, response) => {
+	let balance = await viewBalance('b4d368f8-0438-4905-97af-3492e5a276fa');
+	// let userObject = await db.User.findByPk('b4d368f8-0438-4905-97af-3492e5a276fa');
+	let transactions = await viewTransactionList(balance.id, 10, 0);
+	// console.log(transactions);
+	var transactionsStr = "<ol>";
+	transactions.forEach((transaction) => {
+		// console.log(transaction.id)
+		let str = `<li>${transaction.type} ${transaction.amount} ${transaction.createdAt}</li>`;
+
+		transactionsStr = transactionsStr + str;
+	});
+	transactionsStr.concat("</ol>")
+	console.log(transactionsStr);
+	return response.send(`<h1>Dashboard</h1> <br>  <span style="font-weight: bold;">Balance:</span> ${balance.balance} points <h2>Transactions</h2>${transactionsStr} <a href="/account/login">Logout</a>`)
+});
+
+db.sequelize.sync({ force: true }).then((request) => {
 	app.listen(PORT, () => {
 		console.log(`Express server started on port ${PORT}.`);
 	});

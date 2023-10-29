@@ -2,15 +2,8 @@ const bcrypt = require('bcrypt');
 const { response } = require('express');
 const { User } = require('../models');
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
 const { verifyToken, createEmailVerificationToken } = require('./token.controller');
 const { createWallet } = require('./wallet.controller');
-
-dotenv.config();
-
-const getLogin =  (request, response) => {
-  response.render('login');
-}
 
 const isAuthorized = async (request, response, next) => {
 	let { access_token } = request.body;
@@ -19,47 +12,49 @@ const isAuthorized = async (request, response, next) => {
 		const data = jwt.verify(access_token, process.env.TOKEN_SECRET);
 		let user = await User.findOne({ where: { id: data.userId, status: 'active' } });
 
-		
 		if (user == null)
 			throw "User doesn't exist";
-
+		
 		return response.sendStatus(200); 
-
+		
 	} catch (error) {
 		return response.sendStatus(403);
 	}
-
+	
 }
 
 const postRegister = async (request, response) => {
-	let { email, password, phoneNumber } = request.body;
+	let { name, email, password, re_password, phoneNumber } = request.body;
 
 	try {
+		if (password !== re_password) 
+			throw "Passwords do not match";
+		
 		let user = await User.create({ email: email.toString(), password: password.toString(), phoneNumber: phoneNumber.toString() });
 		
 		let tokenId = await createEmailVerificationToken(user);
 		let uid = btoa(user.id);
-
+		
 		return response.status(201).send({ user: { "verificationLink": `http://${request.hostname}:${process.env.PORT}/account/activate/${uid}/${tokenId}`} })
-
+		
 	} catch (error) {
 		console.error(error);
 		return	response.status(400).send({ message: 'Invalid email or password' });
 	} 
 }
-
-const postLogin = (request, response) => {
+const postLogin = async (request, response) => {
 	let { email, password } = request.body;
 
 	if (!email || !password) {
-		return response.status(400).send('Request missing username or password param')
+		return response.status(400).send('Request missing username and/or password param')
 	}
 	try {
-		let userObject = User.findOne({ where: { email: email, status: 'active' } });
-		
+		let userObject = await User.findOne({ where: { email: email, status: 'active' } });
+
 		if (!checkPassword(password, userObject.password))
 			throw "Incorrect email or password"
-		return response.status(200).send({ access_token: { token: generateAccessToken({ userId: user.id }), tokenOptions } });
+		// return response.status(200).send({ access_token: { token: generateAccessToken({ userId: user.id }), tokenOptions } });
+		return response.redirect('/dashboard');
 
 	} catch (error) {
 		console.error(error);
@@ -108,8 +103,7 @@ const getActivateAccount = async (request, response) => {
 };
 
 
-
-let checkPassword = (password, passwordHash) => 
+let checkPassword = (password, re_password, passwordHash) => 
 	bcrypt.compareSync(password.toString(), 
 	passwordHash.toString(), 
 	(error, result) => {
@@ -139,4 +133,5 @@ let tokenOptions = {
 let generateAccessToken = (userId) => {
 	return jwt.sign(userId, process.env.TOKEN_SECRET, { expiresIn: `1m` });
 }
-module.exports = { postRegister, postLogin, getLogin, postLogout, isAuthorized, checkPassword, getActivateAccount };
+
+module.exports = { postRegister, postLogin, postLogout, isAuthorized, checkPassword, getActivateAccount };

@@ -84,7 +84,7 @@ const addBalance = async (userId, amount) => {
 
         await createTransaction(amount, "gain", null, wallet);
 
-        recomputeWallet(wallet.id);
+        // recomputeWallet(wallet.id);
 
         return wallet.balance;    
     } catch (error) {
@@ -143,4 +143,4 @@ const postAddBalance = async (request, response) => {
     }
 }
 
-module.exports = { createWallet, getUserWallet, postDeductBalance, postAddBalance }
+module.exports = { createWallet, getUserWallet, postDeductBalance, postAddBalance, viewBalance }
