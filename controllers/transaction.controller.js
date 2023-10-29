@@ -28,7 +28,7 @@ const viewTransaction = async (transactionId) =>  {
 
         
         if (transaction == null)
-            throw "Transaction not found"
+            throw "Transaction not found";
 
         return transaction;
     } catch (error) {
@@ -48,7 +48,7 @@ const viewTransactionList = async (walletId, transactionsPerPage, page) =>  {
         // console.log(transactions.length)
         // console.log(transactions == [])
 
-        if (transactions.length == 0) // wallet does not exist
+        if (transactions.length == 0) // -wallet does not exist-  No transactions
             throw "Wallet not found"
         return transactions;
     } catch (error) {
@@ -58,8 +58,6 @@ const viewTransactionList = async (walletId, transactionsPerPage, page) =>  {
 
 
 const getWalletTransactions = async (walletId) => {
-    // let gainTransactions = await Transaction.findAll({ where: { WalletId: walletId, status: "gain" }});
-    // let deductTransactions = await Transaction.findAll({ where: { WalletId: walletId, status: "deduct" }});
     let transactions = await Transaction.findAll({
         where: { WalletId: walletId },
         attributes: [
@@ -105,5 +103,6 @@ const getRecentTransactions = async (request, response) => {
 module.exports = {
     createTransaction,
     getRecentTransactions,
-    recomputeWallet
+    recomputeWallet,
+    viewTransactionList
 }

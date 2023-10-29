@@ -6,7 +6,7 @@ const accountController = require('../controllers/account.controller');
 router.post('/register', accountController.postRegister);
 
 router.get('/activate/:uid/:token', accountController.getActivateAccount);
-
+    
 router.post('/login', accountController.postLogin);         
 
 router.post('/logout', accountController.postLogout);         
