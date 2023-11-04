@@ -9,25 +9,27 @@ const env = process.env.NODE_ENV || 'development';
 const config = require(__dirname + '/../config/config.json')[env];
 const db = {};
 
-let sequelize;
-if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
-} else {
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
-}
-
+let sequelize = require('./init');
+console.log(__dirname)
 fs
   .readdirSync(__dirname)
   .filter(file => {
+    // console.log('basename: ' + basename);
+    // return (['OTPCode.model.js', 'index.js', 'init.js', 'transaction.models.js', 'wallet.models.js']);
     return (
-      file.indexOf('.') !== 0 &&
-      file !== basename &&
-      file.slice(-3) === '.js' &&
-      file.indexOf('.test.js') === -1
+    //   file.indexOf('.') !== 0 &&
+    //   file !== basename &&
+      file !== 'init.js' &&
+      // file !== 'OTPCode.model.js' &&
+      file !== 'index.js' &&
+      file !== 'transaction.models.js' &&
+      file !== 'wallet.model.js'
+    //   file.slice(-3) === '.js' &&
+    //   file.indexOf('.test.js') === -1
     );
   })
   .forEach(file => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+    const model = require(path.join(__dirname, file));
     db[model.name] = model;
   });
 
@@ -39,16 +41,17 @@ Object.keys(db).forEach(modelName => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
-
+// console.log(db)
 function applyExtraSetup(sequelize) {
-  
-	const { User, Token, Wallet, Transaction } = sequelize.models;
+	const { User, Token, OTPCode } = sequelize.models;
 
-	User.hasMany(Token);
-  Wallet.belongsTo(User);
-  Wallet.hasMany(Transaction);
+  User.hasMany(Token);
+  User.hasMany(OTPCode);
+//   Wallet.belongsTo(User);
+//   Wallet.hasMany(Transaction);
 }
 
 applyExtraSetup(sequelize)
 
+// console.log('4')
 module.exports = db;
