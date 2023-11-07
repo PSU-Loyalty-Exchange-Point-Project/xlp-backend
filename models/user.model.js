@@ -4,7 +4,64 @@ const saltRounds = 10;
 const sequelize = require('./init');
 
 class User extends Model {
+    setActivatedStatus() {
+        this.status = 'active';
+        this.save();
+    }
     
+    setPhoneVerifiedStatus() {
+        this.status = 'phone verified';
+        this.save();
+    }
+    
+    setSuspendedStatus() {
+        this.status = 'suspended';
+        this.save();
+    }
+
+    setForgetPasswordStatus() {
+        this.status = 'forget password';
+        this.save();
+    }
+
+    passwordValid(password) {
+        // Checks password entered by the user against the
+        // password hash stored in the user object.
+
+        return bcrypt.compareSync(
+            password.toString(), // Entered password
+            this.password.toString()); // Stored password
+    }
+
+    setPassword(newPassword) {
+        try {
+            this.password = newPassword;
+            this.save();
+            return true;
+        }
+        catch (error) {
+            console.error(error)
+            return false;
+        }
+    }
+
+    static async authenticate(email, password) {
+        try {
+            let user = await User.findOne({ where: { email: email, status: 'active' } }); 
+
+            if (!user) 
+                throw "User does not exist"
+            
+            if (!user.passwordValid(password)) 
+                throw "Incorrect password" 
+            
+            return user;
+        }
+        catch (error) {
+            console.error(error)
+            return null;
+        }
+    }
 }
 User.init({
     id: {
@@ -55,11 +112,12 @@ User.init({
     status: {
         type: DataTypes.ENUM(
             'inactive',
+            'phone verified',
             'active',
             'suspended',
-            'forgetPassword'
+            'forget password'
         ),
-        defaultValue: 'inactive',
+        defaultValue: 'forget password',
         allowNull: false
     }
 }, { sequelize });
