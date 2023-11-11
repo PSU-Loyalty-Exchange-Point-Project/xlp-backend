@@ -117,7 +117,7 @@ User.init({
             'suspended',
             'forget password'
         ),
-        defaultValue: 'forget password',
+        defaultValue: 'inactive',
         allowNull: false
     }
 }, { sequelize });
