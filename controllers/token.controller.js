@@ -3,7 +3,7 @@ const { Token, Sequelize } = require('../models');
 
 const  createEmailVerificationToken = async (userObject) =>  {
     try {
-        let expireDate = new Date(new Date().getTime() + (0.5 * 60 * 60 * 1000));
+        let expireDate = new Date(new Date().getTime() + (30 * 60 * 1000));
 
         var token = await Token.create({expiresAt: expireDate});
     

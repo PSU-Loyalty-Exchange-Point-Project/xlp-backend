@@ -1,9 +1,13 @@
 const bcrypt = require('bcrypt');
 const { response } = require('express');
-const { User } = require('../models');
+const { User, Token, OTPCode } = require('../models');
 const jwt = require('jsonwebtoken');
 const { verifyToken, createEmailVerificationToken } = require('./token.controller');
 const { createWallet } = require('./wallet.controller');
+const { sendOTP, createOTP } = require('./otp.controller');
+const { use } = require('chai');
+const { validate } = require('uuid');
+// console.log(User)
 
 const isAuthorized = async (request, response, next) => {
 	let { access_token } = request.body;
@@ -24,37 +28,56 @@ const isAuthorized = async (request, response, next) => {
 }
 
 const postRegister = async (request, response) => {
-	let { name, email, password, re_password, phoneNumber } = request.body;
+	// This function will receive the data 
+	// confirm that the passwords match
+	// It will then create the user object
+	// The frontend must then redirect the user to a OTP confirmation screen
 
+	let { name, email, password, rePassword, phoneNumber } = request.body;
+	let user, OTPCode;
 	try {
-		if (password !== re_password) 
+		if (password !== rePassword) 
 			throw "Passwords do not match";
 		
-		let user = await User.create({ email: email.toString(), password: password.toString(), phoneNumber: phoneNumber.toString() });
+		user = await new User({ name: name, email: email, password: password, phoneNumber: phoneNumber });
+		await user.save();
 		
-		let tokenId = await createEmailVerificationToken(user);
-		let uid = btoa(user.id);
+		OTPCode = await createOTP(user);
 		
-		return response.status(201).send({ user: { "verificationLink": `http://${request.hostname}:${process.env.PORT}/account/activate/${uid}/${tokenId}`} })
+		if (!OTPCode)
+			throw "Failed to create OTP";
+		
+		OTPCode.sendOTP();
+		return response.sendStatus(201);
 		
 	} catch (error) {
+		if (user)
+			user.destroy();
+		
+		if (OTPCode)
+			OTPCode.destroy();
+		
+		if (error.name == "SequelizeUniqueConstraintError")
+			error = "User already exists";
+
 		console.error(error);
-		return	response.status(400).send({ message: 'Invalid email or password' });
-	} 
+		
+		return	response.status(400).send({ message: error });
+	}
 }
 const postLogin = async (request, response) => {
 	let { email, password } = request.body;
-
+	console.log(request.body);
 	if (!email || !password) {
 		return response.status(400).send('Request missing username and/or password param')
 	}
 	try {
 		let userObject = await User.findOne({ where: { email: email, status: 'active' } });
-
+		console.log(userObject)
 		if (!checkPassword(password, userObject.password))
 			throw "Incorrect email or password"
-		// return response.status(200).send({ access_token: { token: generateAccessToken({ userId: user.id }), tokenOptions } });
-		return response.redirect('/dashboard');
+		return response.status(200).send({ access_token: { token: generateAccessToken({ userId: user.id }), tokenOptions } });
+		// return response.redirect('/dashboard');
 
 	} catch (error) {
 		console.error(error);
