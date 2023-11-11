@@ -16,8 +16,6 @@ router.post('/logout', accountController.postLogout);
 
 router.post('/check-authorization', accountController.isAuthorized);         
 
-// router.get('/profile', accountController.getProfile);      
-// router.post('/profile', accountController.postProfile);     
-
+router.post('/change-password', accountController.postChangePassword);         
 
 module.exports = router;

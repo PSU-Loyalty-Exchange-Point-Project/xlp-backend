@@ -6,8 +6,8 @@ const { verifyToken, createEmailVerificationToken } = require('./token.controlle
 const { createWallet } = require('./wallet.controller');
 const { sendOTP, createOTP } = require('./otp.controller');
 const { use } = require('chai');
-const { validate } = require('uuid');
-// console.log(User)
+const { authenticate } = require('../models/user.model');
+const { countryCodeExists } = require('../staticData/countryCodes');
 
 const isAuthorized = async (request, response, next) => {
 	let { access_token } = request.body;
@@ -33,21 +33,26 @@ const postRegister = async (request, response) => {
 	// It will then create the user object
 	// The frontend must then redirect the user to a OTP confirmation screen
 
-	let { name, email, password, rePassword, phoneNumber } = request.body;
+	let { name, email, password, rePassword, countryCode, phoneNumber } = request.body;
+	
 	let user, OTPCode;
 	try {
 		if (password !== rePassword) 
 			throw "Passwords do not match";
-		
+			
+		if (!countryCodeExists(countryCode))
+			throw "Country code is incorrect";
+
 		user = await new User({ name: name, email: email, password: password, phoneNumber: phoneNumber });
 		await user.save();
 		
 		OTPCode = await createOTP(user);
-		
+		await OTPCode.save();
+
 		if (!OTPCode)
 			throw "Failed to create OTP";
 		
-		OTPCode.sendOTP();
+		// OTPCode.sendOTP();
 		return response.sendStatus(201);
 		
 	} catch (error) {
@@ -65,23 +70,31 @@ const postRegister = async (request, response) => {
 		return	response.status(400).send({ message: error });
 	}
 }
+
 const postLogin = async (request, response) => {
 	let { email, password } = request.body;
-	console.log(request.body);
-	if (!email || !password) {
-		return response.status(400).send('Request missing username and/or password param')
-	}
+	// console.log(request.body);
+	
 	try {
-		let userObject = await User.findOne({ where: { email: email, status: 'active' } });
-		console.log(userObject)
-		if (!checkPassword(password, userObject.password))
-			throw "Incorrect email or password"
-		return response.status(200).send({ access_token: { token: generateAccessToken({ userId: user.id }), tokenOptions } });
-		// return response.redirect('/dashboard');
+		if (!email || !password) 
+			throw 'Request missing username and/or password param';
+
+		let user = await authenticate(email, password);
+
+		if(!user) 
+			throw "Incorrect email or password";
+		
+		
+	// login
+	// 	let userObject = await User.findOne({ where: { email: email, status: 'active' } });
+	// 	console.log(userObject)
+
+	// 	return response.status(200).send({ access_token: { token: generateAccessToken({ userId: user.id }), tokenOptions } });
+	// 	// return response.redirect('/dashboard');
 
 	} catch (error) {
-		console.error(error);
-		return response.status(400).send({ message: 'Authentication unsuccessful' });
+
+		return response.status(400).send({ message: error });
 	}
 }
 
@@ -104,48 +117,91 @@ const postLogout = (request, response) => {
 };
 
 const getActivateAccount = async (request, response) => {
+	let { uid, token } = request.params;
 	try {
-		let { uid, token } = request.params;
+
 		let userId = atob(uid);
 
 		let user = await User.findOne({ where: { id: userId, status: "inactive" } });
-		if (user == null)
+		
+		if (!user)
 			throw "Token is invalid";
 		
 		let tokenValid = await verifyToken(token, user.id)
+		
 		if (!tokenValid)
 			throw "Token is invalid";
+
 		
-		activateAccount(user);
-		createWallet(user);
+		user.setActivatedStatus();
+
+		// createWallet(user);
 		return response.status(200).send({ message: "Email verified successfully" });
 		
 	} catch (error) {
-		return response.status(400).send({ message: "Token is invalid" });
+		return response.status(400).send({ message: error });
 	}
 };
 
+const postChangePassword = async (request, response) => {
+	let { userId, oldPassword, newPassword } = request.body;
 
-let checkPassword = (password, re_password, passwordHash) => 
-	bcrypt.compareSync(password.toString(), 
-	passwordHash.toString(), 
-	(error, result) => {
+	try {
 
-	//if error than throw error
-	if (error) throw error;
+		let user = await User.findOne({ where: { id: userId, status: "active" } });
 
-	//if both match than you can do anything
-	if (result) 
-		return true;
-	else 
-		return false;
+		if (!user)
+			throw "User not found";
 
-});
 
-let activateAccount = (userObject) => {
-	userObject.status = 'active';
-	userObject.save();
-}
+		if (!user.passwordValid(oldPassword))
+			throw "Password could not be verified";
+		
+		if (user.passwordValid(newPassword))
+			throw "Password cannot be the same as the existing one";
+
+		
+		let passwordChanged = user.setPassword(newPassword);
+		
+		if (!passwordChanged)
+			throw "An error occurred while changing the password"
+		
+		return response.status(200).send({ message: "Password changed successfully" });
+		
+	} catch (error) {
+		console.error(error)
+		return response.status(400).send({ message: error });
+	}
+};
+
+const postResetPassword = async (request, response) => {
+	let { userId, newPassword } = request.body;
+
+	try {
+
+		let user = await User.findOne({ where: { id: userId, status: "forget password" } });
+
+		if (!user)
+			throw "User not found";
+
+		
+		if (user.passwordValid(newPassword))
+			throw "Password cannot be the same as the existing one";
+
+		
+		let passwordChanged = user.setPassword(newPassword);
+		
+		if (!passwordChanged)
+			throw "An error occurred while changing the password"
+		
+		return response.status(200).send({ message: "Password changed successfully" });
+		
+	} catch (error) {
+		console.error(error)
+		return response.status(400).send({ message: error });
+	}
+};
+
 
 let tokenOptions = { 
 	httpOnly: true, 
@@ -157,4 +213,4 @@ let generateAccessToken = (userId) => {
 	return jwt.sign(userId, process.env.TOKEN_SECRET, { expiresIn: `1m` });
 }
 
-module.exports = { postRegister, postLogin, postLogout, isAuthorized, checkPassword, getActivateAccount };
+module.exports = { postRegister, postLogin, postLogout, isAuthorized, getActivateAccount, postChangePassword };
