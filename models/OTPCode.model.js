@@ -6,19 +6,7 @@ const UserClass = require('./user.model');
 const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 class OTPCode extends Model {
-    constructor(userObject) {
-        super();
-
-        let expireDate = new Date(new Date().getTime() + (process.env.OTP_MINUTES_TO_EXPIRE * 60 * 1000));
-        
-        this.code = this.generateOTPCode();
-        this.expiresAt = expireDate;
-        this.UserId = userObject.id;
-
-        return this;
-    }
-
-    generateOTPCode() {
+    static generateOTPCode() {
         var OTPStr = "";
         for (let i = 0; i < parseInt(process.env.OTP_LENGTH); i++) {
             let number = Math.floor(Math.random() * 10);
@@ -28,7 +16,6 @@ class OTPCode extends Model {
     }
 
     async sendOTP() {
-        console.log("Sending OTP")
         let user = await UserClass.findByPk(this.UserId);
 
         client.messages
@@ -38,6 +25,11 @@ class OTPCode extends Model {
                 to: `whatsapp:+${user.phoneNumber}`
             })
             .then(message => console.log(message.sid));
+    }
+
+    consumeOTP() {
+        this.status = 'consumed';
+        this.save()
     }
 
 }
@@ -71,4 +63,14 @@ OTPCode.init({
     include: [ User ]
 });
 
+
+OTPCode.beforeValidate(function(otpCode) { 
+
+    let expireDate = new Date(new Date().getTime() + (process.env.OTP_MINUTES_TO_EXPIRE * 60 * 1000));
+        
+    otpCode.code = OTPCode.generateOTPCode();
+    otpCode.expiresAt = expireDate;
+
+ });
+ 
 module.exports = OTPCode;

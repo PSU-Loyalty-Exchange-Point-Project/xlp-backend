@@ -64,7 +64,7 @@ GiftCard.init({
 
 GiftCard.beforeValidate(function(giftCard) { 
     let expireDate = new Date(new Date().getTime() + 31536000000); // 1 Year from the time of creation
-    
+
     giftCard.number = GiftCard.generateGiftCardNumber();
     giftCard.expiresAt = expireDate;
  });
