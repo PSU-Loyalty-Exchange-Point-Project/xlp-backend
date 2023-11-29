@@ -1,6 +1,11 @@
 const express = require('express');
+<<<<<<< Updated upstream
 // const session = require('express-session');
 // const jwt = require('jsonwebtoken');
+=======
+const session = require('express-session');
+const jwt = require('jsonwebtoken');
+>>>>>>> Stashed changes
 const dotenv = require('dotenv');
 
 // // get config vars
@@ -8,9 +13,12 @@ dotenv.config();
 
 const tokenMaxAgeMs = parseInt(process.env.TOKEN_AGE_DAYS) * 24  * 3600000; 
 const app = express();
+<<<<<<< Updated upstream
 const PORT = process.env.PORT;
 const cors = require('cors');
 const fs = require('fs');
+=======
+>>>>>>> Stashed changes
 
 const db = require('./models');
 
@@ -18,18 +26,10 @@ const db = require('./models');
 // app.use(bodyParser.json())
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/public",express.static(__dirname + "/public"));
+var SequelizeStore = require("connect-session-sequelize")(session.Store);
 const accountRouter = require('./routers/account.router');
-app.use(cors({ optionsSuccessStatus:200}));
-const cookieParser = require('cookie-parser');
-// var SequelizeStore = require("connect-session-sequelize")(session.Store);
 const walletRouter = require('./routers/wallet.router');
-const transactionRouter = require('./routers/transaction.router');
-// require('dotenv').config();
 
-
-const { viewBalance } = require('./controllers/wallet.controller');
-const { viewTransactionList } = require('./controllers/transaction.controller');
 
 // async function assertDatabaseConnectionOk() {
 // 	console.log(`Checking database connection...`);
@@ -56,11 +56,30 @@ const { viewTransactionList } = require('./controllers/transaction.controller');
 // init();
 app.use(express.json())
 
+<<<<<<< Updated upstream
+=======
+app.use(session({
+	secret: process.env.REFRESH_TOKEN_SECRET,
+	resave: false,
+	store: new SequelizeStore({
+		db: db.sequelize,
+	}),
+	saveUninitialized: false,
+	cookie: {
+		maxAge: process.env.REFRESH_TOKEN_AGE * 3600000
+	}
+}))
+
+>>>>>>> Stashed changes
 app.use('/account', accountRouter);
 app.use('/wallet', walletRouter);
 app.use('/transaction', transactionRouter);
 
-let { recomputeWallet } = require('./controllers/transaction.controller')
+app.use('/wallet', walletRouter);
+
+app.use('/wallet', walletRouter);
+
+app.get('/', (request, response) => {
 
 let countryCodesObjectsList = JSON.parse(fs.readFileSync('./staticData/countryCodes.json'));
 let countryCodeDialCodeList = []
@@ -75,6 +94,7 @@ app.get('/', async (request, response) => {
 	// return response.send({ message: "Main root" });
 });
 
+<<<<<<< Updated upstream
 app.get('/dashboard', async (request, response) => {
 	let balance = await viewBalance('b4d368f8-0438-4905-97af-3492e5a276fa');
 	// let userObject = await db.User.findByPk('b4d368f8-0438-4905-97af-3492e5a276fa');
@@ -95,5 +115,10 @@ app.get('/dashboard', async (request, response) => {
 db.sequelize.sync({ force: true }).then((request) => {
 	app.listen(PORT, () => {
 		console.log(`Express server started on port ${PORT}.`);
+=======
+db.sequelize.sync({ force: true}).then((request) => {
+	app.listen(process.env.PORT, () => {
+		console.log(`Express server started on port ${process.env.PORT}.`);
+>>>>>>> Stashed changes
 	});
 });
