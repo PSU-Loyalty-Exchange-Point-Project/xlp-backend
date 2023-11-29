@@ -10,22 +10,13 @@ const config = require(__dirname + '/../config/config.json')[env];
 const db = {};
 
 let sequelize = require('./init');
-console.log(__dirname)
+const { Transaction } = require('sequelize');
 fs
   .readdirSync(__dirname)
   .filter(file => {
-    // console.log('basename: ' + basename);
-    // return (['OTPCode.model.js', 'index.js', 'init.js', 'transaction.models.js', 'wallet.models.js']);
     return (
-    //   file.indexOf('.') !== 0 &&
-    //   file !== basename &&
       file !== 'init.js' &&
-      // file !== 'OTPCode.model.js' &&
-      file !== 'index.js' &&
-      file !== 'transaction.models.js' &&
-      file !== 'wallet.model.js'
-    //   file.slice(-3) === '.js' &&
-    //   file.indexOf('.test.js') === -1
+      file !== 'index.js'
     );
   })
   .forEach(file => {
@@ -41,17 +32,18 @@ Object.keys(db).forEach(modelName => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
-// console.log(db)
+
 function applyExtraSetup(sequelize) {
-	const { User, Token, OTPCode } = sequelize.models;
+  console.log(sequelize.models);
+  
+	const { User, Token, OTPCode, Wallet, Transaction } = sequelize.models;
 
   User.hasMany(Token);
+  Wallet.belongsTo(User);
+  Wallet.hasMany(Transaction);
   User.hasMany(OTPCode);
-//   Wallet.belongsTo(User);
-//   Wallet.hasMany(Transaction);
 }
 
 applyExtraSetup(sequelize)
 
-// console.log('4')
 module.exports = db;
