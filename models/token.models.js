@@ -8,7 +8,8 @@ var client = new postmark.ServerClient(process.env.POSTMARK_SERVER_CLIENT_SECRET
 
 class Token extends Model {
     async sendToken() {
-        let user = await UserClass.findByPk(this.UserId);
+        let user = await UserClass.findOne({ where: { id: this.UserId } });
+
         let uid = btoa(user.id);
 
         let email = await client.sendEmail({

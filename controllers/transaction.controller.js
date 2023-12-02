@@ -2,22 +2,29 @@ const { request } = require('express');
 const { Transaction, User, sequelize, Wallet } = require('../models');
 
 
-const createTransaction = async (transactionAmount, transactionType, transactionNote = null, walletObject) =>  {
+const createTransaction = async (transactionAmount, transactionType, transactionNote = null, walletId) =>  {
     try {
-        let transaction = await Transaction.create(
-            { 
-                amount: transactionAmount, 
-                type: transactionType,
-                note: transactionNote
-            });
-
-        walletObject.addTransaction(transaction);
+        let transaction = new Transaction({
+            amount: transactionAmount,
+            type: transactionType,
+            note: transactionNote,
+            WalletId: walletId
+        });
+        //  await Transaction.create(
+        //     { 
+        //         amount: transactionAmount, 
+        //         type: transactionType,
+        //         note: transactionNote
+        //     });
+        await transaction.save();
+        // walletObject.addTransaction(transaction);
         
-        if (transaction == null)
+        if (!transaction)
             throw "Error creating transaction"
         
         return true;
     } catch (error) {
+        console.error(error);
         return error;
     }
 };

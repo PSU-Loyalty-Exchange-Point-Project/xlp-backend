@@ -34,7 +34,6 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 function applyExtraSetup(sequelize) {
-  console.log(sequelize.models);
   
 	const { User, Token, OTPCode, Wallet, Transaction } = sequelize.models;
 
@@ -44,6 +43,6 @@ function applyExtraSetup(sequelize) {
   User.hasMany(OTPCode);
 }
 
-applyExtraSetup(sequelize)
+applyExtraSetup(sequelize);
 
 module.exports = db;

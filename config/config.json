@@ -2,7 +2,7 @@
   "development": {
     "storage": "./db.sqlite",
     "dialect": "sqlite",
-    "logQueryParameters": false,
+    "logQueryParameters": true,
     "benchmark": true,
     "logging": true
   },

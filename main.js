@@ -1,5 +1,4 @@
 const express = require('express');
-
 // const session = require('express-session');
 // const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
@@ -10,6 +9,7 @@ dotenv.config();
 const tokenMaxAgeMs = parseInt(process.env.TOKEN_AGE_DAYS) * 24  * 3600000; 
 const app = express();
 const PORT = process.env.PORT;
+const cors = require('cors');
 const fs = require('fs');
 
 const db = require('./models');
@@ -18,12 +18,20 @@ const db = require('./models');
 // app.use(bodyParser.json())
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/public",express.static(__dirname + "/public"));
+app.use(cors({ optionsSuccessStatus:200}));
+const cookieParser = require('cookie-parser');
 // var SequelizeStore = require("connect-session-sequelize")(session.Store);
-const accountRouter = require('./routers/account.router');
-const transactionRouter = require('./routers/transaction.router');
-const walletRouter = require('./routers/wallet.router');
-const giftCardRouter = require('./routers/giftCard.router');
 
+const accountRouter = require('./routers/account.router');
+const walletRouter = require('./routers/wallet.router');
+const transactionRouter = require('./routers/transaction.router');
+const giftCardRouter = require('./routers/giftCard.router');
+// require('dotenv').config();
+
+
+const { viewBalance } = require('./controllers/wallet.controller');
+const { viewTransactionList } = require('./controllers/transaction.controller');
 
 // async function assertDatabaseConnectionOk() {
 // 	console.log(`Checking database connection...`);
@@ -37,35 +45,14 @@ const giftCardRouter = require('./routers/giftCard.router');
 // 	}
 // }
 
-// async function init() {
-// 	await assertDatabaseConnectionOk();
-
-// 	console.log(`Starting Sequelize + Express example on port ${PORT}...`);
-
-// 	app.listen(PORT, () => {
-// 		console.log(`Express server started on port ${PORT}. Try some routes, such as '/api/users'.`);
-// 	});
-// }
-
-// init();
 app.use(express.json())
-// app.use(session({
-// 	secret: process.env.REFRESH_TOKEN_SECRET,
-// 	resave: false,
-// 	store: new SequelizeStore({
-// 		db: db.sequelize,
-// 	}),
-// 	saveUninitialized: false,
-// 	cookie: {
-// 		maxAge: process.env.REFRESH_TOKEN_AGE * 3600000
-// 	}
-// }))
 
 app.use('/account', accountRouter);
 app.use('/wallet', walletRouter);
 app.use('/transaction', transactionRouter);
 app.use('/gift-card', giftCardRouter);
 
+let { recomputeWallet } = require('./controllers/transaction.controller')
 
 
 app.get('/', async (request, response) => {
@@ -77,6 +64,9 @@ app.get('/', async (request, response) => {
 	// // console.log(countryCodesList.length);
 	// return response.send({ message: "Main root" });
 });
+
+
+
 
 app.get('/dashboard', async (request, response) => {
 	let balance = await viewBalance('b4d368f8-0438-4905-97af-3492e5a276fa');
@@ -95,8 +85,8 @@ app.get('/dashboard', async (request, response) => {
 	return response.send(`<h1>Dashboard</h1> <br>  <span style="font-weight: bold;">Balance:</span> ${balance.balance} points <h2>Transactions</h2>${transactionsStr} <a href="/account/login">Logout</a>`)
 });
 
-db.sequelize.sync({ force: true }).then((request) => {
-	app.listen(process.env.PORT, () => {
-		console.log(`Express server started on port ${process.env.PORT}.`);
+db.sequelize.sync({ force: false }).then((request) => {
+	app.listen(PORT, () => {
+		console.log(`Express server started on port ${PORT}.`);
 	});
 });

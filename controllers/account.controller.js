@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const { response } = require('express');
-const { User, Token, OTPCode } = require('../models');
+const { User, Token, OTPCode, Sequelize } = require('../models');
 const jwt = require('jsonwebtoken');
 const { verifyToken, createEmailVerificationToken } = require('./token.controller');
 const { createWallet } = require('./wallet.controller');
@@ -10,6 +10,7 @@ const { authenticate } = require('../models/user.model');
 const { countryCodeExists } = require('../staticData/countryCodes');
 
 const isAuthorized = async (request, response, next) => {
+	// Not functional yet
 	let { access_token } = request.body;
 	
 	try {
@@ -30,12 +31,15 @@ const isAuthorized = async (request, response, next) => {
 const postRegister = async (request, response) => {
 	// This function will receive the data 
 	// confirm that the passwords match
+	// confirm that the country dial code exists
 	// It will then create the user object
-	// The frontend must then redirect the user to a OTP confirmation screen
+	// It will then generate an OTP 
+	// the OTP will be sent to the user
+	// The frontend must then redirect the user to an OTP confirmation screen
 
 	let { name, email, password, rePassword, countryCode, phoneNumber } = request.body;
-	
 	let user, OTPCode;
+
 	try {
 		if (password !== rePassword) 
 			throw "Passwords do not match";
@@ -43,16 +47,19 @@ const postRegister = async (request, response) => {
 		if (!countryCodeExists(countryCode))
 			throw "Country code is incorrect";
 
-		user = await new User({ name: name, email: email, password: password, phoneNumber: phoneNumber });
+		user = await new User({ name: name, email: email, password: password, phoneNumber: countryCode + phoneNumber });
 		await user.save();
-		
-		OTPCode = await createOTP(user);
+
+		if (!user)
+			throw "Failed to create user";
+
+		OTPCode = await createOTP(user.id);
 		await OTPCode.save();
 
 		if (!OTPCode)
 			throw "Failed to create OTP";
 		
-		// OTPCode.sendOTP();
+		OTPCode.sendOTP();
 		return response.sendStatus(201);
 		
 	} catch (error) {
@@ -72,8 +79,13 @@ const postRegister = async (request, response) => {
 }
 
 const postLogin = async (request, response) => {
+	// This function will receive the data 
+	// confirm that the password and email exists
+	// It will then generate an OTP 
+	// the OTP will be sent to the user
+	// The frontend must then redirect the user to an OTP confirmation screen
+
 	let { email, password } = request.body;
-	// console.log(request.body);
 	
 	try {
 		if (!email || !password) 
@@ -122,20 +134,33 @@ const getActivateAccount = async (request, response) => {
 
 		let userId = atob(uid);
 
-		let user = await User.findOne({ where: { id: userId, status: "inactive" } });
+		let user = await User.findOne({ where: { id: userId, status: "phone verified" } });
 		
 		if (!user)
 			throw "Token is invalid";
 		
-		let tokenValid = await verifyToken(token, user.id)
-		
-		if (!tokenValid)
+		console.log('before token query')
+		let tokenObject = await Token.findOne({
+			where: {
+				id: token,
+				UserId: user.id,
+				status: 'valid',
+                expiresAt: {
+                    [Sequelize.Op.gt]: new Date()
+                }
+			}
+		})
+
+		if (!tokenObject)
 			throw "Token is invalid";
 
 		
 		user.setActivatedStatus();
 
-		// createWallet(user);
+		tokenObject.consumeToken();
+
+		createWallet(user);
+
 		return response.status(200).send({ message: "Email verified successfully" });
 		
 	} catch (error) {

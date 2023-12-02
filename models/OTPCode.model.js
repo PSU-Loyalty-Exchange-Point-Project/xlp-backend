@@ -16,11 +16,11 @@ class OTPCode extends Model {
     }
 
     async sendOTP() {
-        let user = await UserClass.findByPk(this.UserId);
+        let user = await UserClass.findOne({ where: { id: this.UserId } });
 
         client.messages
             .create({
-                body: `Your XLP code is ${this.code}`,
+                body: `Hi ${user.name},\nYour XLP code is: ${this.code}`,
                 from: 'whatsapp:+14155238886',
                 to: `whatsapp:+${user.phoneNumber}`
             })
@@ -43,6 +43,7 @@ OTPCode.init({
     code: {
         allowNull: false,
         type: DataTypes.STRING,
+        defaultValue: OTPCode.generateOTPCode()
     },
     status: {
         type: DataTypes.ENUM(
@@ -56,21 +57,12 @@ OTPCode.init({
     },
     expiresAt: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
+        defaultValue: new Date(new Date().getTime() + (process.env.OTP_MINUTES_TO_EXPIRE * 60 * 1000))
     }
 }, {
     sequelize,
     include: [ User ]
 });
 
-
-OTPCode.beforeValidate(function(otpCode) { 
-
-    let expireDate = new Date(new Date().getTime() + (process.env.OTP_MINUTES_TO_EXPIRE * 60 * 1000));
-        
-    otpCode.code = OTPCode.generateOTPCode();
-    otpCode.expiresAt = expireDate;
-
- });
- 
 module.exports = OTPCode;

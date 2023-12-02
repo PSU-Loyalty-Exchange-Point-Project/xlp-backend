@@ -1,20 +1,20 @@
 const { request } = require('express');
 const { Token, Sequelize } = require('../models');
 
-const  createEmailVerificationToken = async (userObject) =>  {
+const  createEmailVerificationToken = async (userId) =>  {
     try {
-        let expireDate = new Date(new Date().getTime() + (30 * 60 * 1000));
+        let token = await new Token({ UserId: userId});
+        await token.save();
 
-        var token = await Token.create({expiresAt: expireDate});
-    
-        userObject.addToken(token);
-        return token.id;
+        return token;
 
     } catch (error) {
         console.error(error);
         return null;
     }
 };
+
+
 
 const verifyToken = async (tokenId, userId) => {
     try {
