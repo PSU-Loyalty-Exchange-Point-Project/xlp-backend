@@ -1,4 +1,4 @@
-const { Model, DataTypes } = require("sequelize");
+const { Model, DataTypes, Sequelize } = require("sequelize");
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const sequelize = require('./init');
@@ -43,6 +43,17 @@ class User extends Model {
             console.error(error)
             return false;
         }
+    }
+
+    getUID() {
+        return (btoa(this.id));
+    }
+
+    obscuredPhoneNumber(){
+        const obscuredPart = '*'.repeat(this.phoneNumber.length - 4);
+        const visiblePart = this.phoneNumber.slice(-4);
+
+        return obscuredPart + visiblePart;
     }
 
     static async authenticate(email, password) {

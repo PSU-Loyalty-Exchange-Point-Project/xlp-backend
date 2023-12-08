@@ -1,23 +1,26 @@
-const bcrypt = require('bcrypt');
-const { response } = require('express');
-const { User, Token, OTPCode, Sequelize } = require('../models');
+const { User } = require('../models');
 const jwt = require('jsonwebtoken');
-const { verifyToken, createEmailVerificationToken } = require('./token.controller');
+const { verifyToken } = require('./token.controller');
 const { createWallet } = require('./wallet.controller');
-const { sendOTP, createOTP } = require('./otp.controller');
-const { use } = require('chai');
+const { createOTP } = require('./otp.controller');
 const { authenticate } = require('../models/user.model');
 const { countryCodeExists } = require('../staticData/countryCodes');
 
 const isAuthorized = async (request, response, next) => {
-	// Not functional yet
+	// Frontend sends the access token
+	// It will verify the token
+	// After the token is verified
+	// Queries the user from the user ID provided by the data
+	// If the user exists it responds with a 200 status code
+	// If the user doesn't exist it responds with a 403 status code
+
 	let { access_token } = request.body;
 	
 	try {
 		const data = jwt.verify(access_token, process.env.TOKEN_SECRET);
 		let user = await User.findOne({ where: { id: data.userId, status: 'active' } });
 
-		if (user == null)
+		if (!user)
 			throw "User doesn't exist";
 		
 		return response.sendStatus(200); 
@@ -54,13 +57,12 @@ const postRegister = async (request, response) => {
 			throw "Failed to create user";
 
 		OTPCode = await createOTP(user.id);
-		await OTPCode.save();
 
 		if (!OTPCode)
 			throw "Failed to create OTP";
 		
 		OTPCode.sendOTP();
-		return response.sendStatus(201);
+		return response.status(201).send({ uid: `${user.getUID()}` });
 		
 	} catch (error) {
 		if (user)
@@ -80,7 +82,7 @@ const postRegister = async (request, response) => {
 
 const postLogin = async (request, response) => {
 	// This function will receive the data 
-	// confirm that the password and email exists
+	// Confirm that the password and email exists
 	// It will then generate an OTP 
 	// the OTP will be sent to the user
 	// The frontend must then redirect the user to an OTP confirmation screen
@@ -96,13 +98,14 @@ const postLogin = async (request, response) => {
 		if(!user) 
 			throw "Incorrect email or password";
 		
-		
-	// login
-	// 	let userObject = await User.findOne({ where: { email: email, status: 'active' } });
-	// 	console.log(userObject)
+		let OTPCode = await createOTP(user.id);
 
-	// 	return response.status(200).send({ access_token: { token: generateAccessToken({ userId: user.id }), tokenOptions } });
-	// 	// return response.redirect('/dashboard');
+		if (!OTPCode)
+			throw "Failed to create OTP";
+
+		OTPCode.sendOTP();
+
+		return response.status(200).send({ uid: `${user.getUID()}` });
 
 	} catch (error) {
 
@@ -111,6 +114,12 @@ const postLogin = async (request, response) => {
 }
 
 const postLogout = (request, response) => {
+	// Frontend sends the access token
+	// It will verify the token
+	// After the token is verified
+	// If the token is verified it responds with a 200 status code
+	// If the user doesn't exist it responds with a 400 status code
+
 	let { access_token } = request.body;
 
 	try {
@@ -118,17 +127,23 @@ const postLogout = (request, response) => {
 
 		jwt.verify(access_token, process.env.TOKEN_SECRET);
 
-		return response
-			.clearCookie("access_token")
-			.status(200)
-			.json({ message: "Successfully logged out!" });
+		return response.sendStatus(200);
+
 	} catch (error) {
 		console.error(error);
 		return response.sendStatus(400);
 	}
-};
+}
 
 const getActivateAccount = async (request, response) => {
+	// This link is sent the user via email
+	// The frontend sends a request to this endpoint with the uid & token
+	// The uid is converted from base64 string to a uuid string
+	// The user is queried from the user ID from the converted uid
+	// It verifies the token by providing both token and user ID and returns a token object
+	// If everything is verified the user status is set to activated & the token is consumed
+	// Finally it creates a wallet for the user
+
 	let { uid, token } = request.params;
 	try {
 
@@ -138,18 +153,8 @@ const getActivateAccount = async (request, response) => {
 		
 		if (!user)
 			throw "Token is invalid";
-		
-		console.log('before token query')
-		let tokenObject = await Token.findOne({
-			where: {
-				id: token,
-				UserId: user.id,
-				status: 'valid',
-                expiresAt: {
-                    [Sequelize.Op.gt]: new Date()
-                }
-			}
-		})
+
+		let tokenObject = await verifyToken(token, user.id)
 
 		if (!tokenObject)
 			throw "Token is invalid";
@@ -166,7 +171,7 @@ const getActivateAccount = async (request, response) => {
 	} catch (error) {
 		return response.status(400).send({ message: error });
 	}
-};
+}
 
 const postChangePassword = async (request, response) => {
 	let { userId, oldPassword, newPassword } = request.body;
@@ -197,7 +202,7 @@ const postChangePassword = async (request, response) => {
 		console.error(error)
 		return response.status(400).send({ message: error });
 	}
-};
+}
 
 const postResetPassword = async (request, response) => {
 	let { userId, newPassword } = request.body;
@@ -225,17 +230,6 @@ const postResetPassword = async (request, response) => {
 		console.error(error)
 		return response.status(400).send({ message: error });
 	}
-};
-
-
-let tokenOptions = { 
-	httpOnly: true, 
-	secure: process.env.NODE_ENV === "production", 
-	maxAge: 60000
-}
-
-let generateAccessToken = (userId) => {
-	return jwt.sign(userId, process.env.TOKEN_SECRET, { expiresIn: `1m` });
 }
 
 module.exports = { postRegister, postLogin, postLogout, isAuthorized, getActivateAccount, postChangePassword };

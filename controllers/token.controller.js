@@ -18,23 +18,35 @@ const  createEmailVerificationToken = async (userId) =>  {
 
 const verifyToken = async (tokenId, userId) => {
     try {
-        let tokenObject = await Token.findOne(
+        let token = await Token.findOne(
             {
                 where: {
                     id: tokenId,
                     UserId: userId,
+                    status: 'valid',
                     expiresAt: {
                         [Sequelize.Op.gt]: new Date()
                     }
                 }
             });
-        
-        tokenObject.expiresAt = new Date();
-        await tokenObject.save();
 
-        return true;
+        // let tokenObject = await Token.findOne(
+        //     {
+        //         where: {
+        //             id: tokenId,
+        //             UserId: userId,
+        //             expiresAt: {
+        //                 [Sequelize.Op.gt]: new Date()
+        //             }
+        //         }
+        //     });
+        
+        // tokenObject.expiresAt = new Date();
+        // await tokenObject.save();
+
+        return token;
     } catch (error) {
-        return false;
+        return null;
     }
 }
 
