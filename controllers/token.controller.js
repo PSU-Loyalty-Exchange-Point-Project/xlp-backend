@@ -1,14 +1,12 @@
 const { request } = require('express');
 const { Token, Sequelize } = require('../models');
 
-const  createEmailVerificationToken = async (userObject) =>  {
+const  createEmailVerificationToken = async (userId) =>  {
     try {
-        let expireDate = new Date(new Date().getTime() + (0.5 * 60 * 60 * 1000));
+        let token = await new Token({ UserId: userId});
+        await token.save();
 
-        var token = await Token.create({expiresAt: expireDate});
-    
-        userObject.addToken(token);
-        return token.id;
+        return token;
 
     } catch (error) {
         console.error(error);
@@ -16,25 +14,39 @@ const  createEmailVerificationToken = async (userObject) =>  {
     }
 };
 
+
+
 const verifyToken = async (tokenId, userId) => {
     try {
-        let tokenObject = await Token.findOne(
+        let token = await Token.findOne(
             {
                 where: {
                     id: tokenId,
                     UserId: userId,
+                    status: 'valid',
                     expiresAt: {
                         [Sequelize.Op.gt]: new Date()
                     }
                 }
             });
-        
-        tokenObject.expiresAt = new Date();
-        await tokenObject.save();
 
-        return true;
+        // let tokenObject = await Token.findOne(
+        //     {
+        //         where: {
+        //             id: tokenId,
+        //             UserId: userId,
+        //             expiresAt: {
+        //                 [Sequelize.Op.gt]: new Date()
+        //             }
+        //         }
+        //     });
+        
+        // tokenObject.expiresAt = new Date();
+        // await tokenObject.save();
+
+        return token;
     } catch (error) {
-        return false;
+        return null;
     }
 }
 

@@ -19,12 +19,14 @@ const db = require('./models');
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/public",express.static(__dirname + "/public"));
-const accountRouter = require('./routers/account.router');
 app.use(cors({ optionsSuccessStatus:200}));
 const cookieParser = require('cookie-parser');
 // var SequelizeStore = require("connect-session-sequelize")(session.Store);
+
+const accountRouter = require('./routers/account.router');
 const walletRouter = require('./routers/wallet.router');
 const transactionRouter = require('./routers/transaction.router');
+const giftCardRouter = require('./routers/giftCard.router');
 // require('dotenv').config();
 
 
@@ -43,27 +45,15 @@ const { viewTransactionList } = require('./controllers/transaction.controller');
 // 	}
 // }
 
-// async function init() {
-// 	await assertDatabaseConnectionOk();
-
-// 	console.log(`Starting Sequelize + Express example on port ${PORT}...`);
-
-// 	app.listen(PORT, () => {
-// 		console.log(`Express server started on port ${PORT}. Try some routes, such as '/api/users'.`);
-// 	});
-// }
-
-// init();
 app.use(express.json())
 
 app.use('/account', accountRouter);
 app.use('/wallet', walletRouter);
 app.use('/transaction', transactionRouter);
+app.use('/gift-card', giftCardRouter);
 
 let { recomputeWallet } = require('./controllers/transaction.controller')
 
-let countryCodesObjectsList = JSON.parse(fs.readFileSync('./staticData/countryCodes.json'));
-let countryCodeDialCodeList = []
 
 app.get('/', async (request, response) => {
 	// countryCodesObjectsList.forEach((countryCodeObject) => {
@@ -74,6 +64,9 @@ app.get('/', async (request, response) => {
 	// // console.log(countryCodesList.length);
 	// return response.send({ message: "Main root" });
 });
+
+
+
 
 app.get('/dashboard', async (request, response) => {
 	let balance = await viewBalance('b4d368f8-0438-4905-97af-3492e5a276fa');
@@ -92,7 +85,7 @@ app.get('/dashboard', async (request, response) => {
 	return response.send(`<h1>Dashboard</h1> <br>  <span style="font-weight: bold;">Balance:</span> ${balance.balance} points <h2>Transactions</h2>${transactionsStr} <a href="/account/login">Logout</a>`)
 });
 
-db.sequelize.sync({ force: true }).then((request) => {
+db.sequelize.sync({ force: false }).then((request) => {
 	app.listen(PORT, () => {
 		console.log(`Express server started on port ${PORT}.`);
 	});
