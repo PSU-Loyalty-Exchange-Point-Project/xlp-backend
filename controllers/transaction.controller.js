@@ -55,8 +55,8 @@ const viewTransactionList = async (walletId, transactionsPerPage, page) =>  {
         // console.log(transactions.length)
         // console.log(transactions == [])
 
-        if (transactions.length == 0) // -wallet does not exist-  No transactions
-            throw "Wallet not found"
+        // if (transactions.length == 0) // -wallet does not exist-  No transactions
+        //     throw "Wallet not found"
         return transactions;
     } catch (error) {
         return error;

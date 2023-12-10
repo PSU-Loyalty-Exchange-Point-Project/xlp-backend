@@ -30,20 +30,6 @@ const verifyToken = async (tokenId, userId) => {
                 }
             });
 
-        // let tokenObject = await Token.findOne(
-        //     {
-        //         where: {
-        //             id: tokenId,
-        //             UserId: userId,
-        //             expiresAt: {
-        //                 [Sequelize.Op.gt]: new Date()
-        //             }
-        //         }
-        //     });
-        
-        // tokenObject.expiresAt = new Date();
-        // await tokenObject.save();
-
         return token;
     } catch (error) {
         return null;
