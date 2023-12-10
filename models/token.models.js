@@ -21,7 +21,7 @@ class Token extends Model {
                         ${process.env.HOSTNAME}/account/activate/${uid}/${this.id}`,
             "TextBody": `Hello ${user.name}, \n
             Click on the following link to activate your account:
-            ${process.env.HOSTNAME}/account/activate/${uid}/${this.id}`,
+            ${process.env.FRONT_END_ADDRESS}/account/activate/${uid}/${this.id}`,
             "MessageStream": "outbound"
         });        
     }
@@ -57,14 +57,14 @@ Token.init({
     },
     expiresAt: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: true
     }
 }, {
     sequelize,
     include: [ User ]
 });
 
-Token.beforeValidate(function(token) { 
+Token.beforeCreate(function(token) { 
     let expireDate = new Date(new Date().getTime() + (30 * 60 * 1000));
         
     token.expiresAt = expireDate;
