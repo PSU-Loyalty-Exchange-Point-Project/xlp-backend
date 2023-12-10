@@ -41,9 +41,8 @@ OTPCode.init({
         defaultValue: DataTypes.UUIDV4
     },
     code: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.STRING,
-        defaultValue: OTPCode.generateOTPCode()
     },
     status: {
         type: DataTypes.ENUM(
@@ -57,12 +56,16 @@ OTPCode.init({
     },
     expiresAt: {
         type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: new Date(new Date().getTime() + (process.env.OTP_MINUTES_TO_EXPIRE * 60 * 1000))
+        allowNull: true,
     }
 }, {
     sequelize,
     include: [ User ]
 });
+
+OTPCode.beforeCreate(async (otpEntry, options) => {
+    otpEntry.code = OTPCode.generateOTPCode();
+    otpEntry.expiresAt = new Date(new Date().getTime() + (process.env.OTP_MINUTES_TO_EXPIRE * 60 * 1000));
+  });
 
 module.exports = OTPCode;
