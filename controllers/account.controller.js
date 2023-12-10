@@ -6,7 +6,22 @@ const { createOTP } = require('./otp.controller');
 const { authenticate } = require('../models/user.model');
 const { countryCodeExists } = require('../staticData/countryCodes');
 
-const isAuthorized = async (request, response, next) => {
+const getDataFromToken = async (access_token) => {
+	// It will verify the token
+	// it will return the data from the token
+	
+	try {
+		const data = jwt.verify(access_token, process.env.TOKEN_SECRET);
+		
+		return data;
+		
+	} catch (error) {
+		console.error(error);
+		return null;
+	}	
+}
+
+const postIsAuthorized = async (request, response, next) => {
 	// Frontend sends the access token
 	// It will verify the token
 	// After the token is verified
@@ -27,8 +42,7 @@ const isAuthorized = async (request, response, next) => {
 		
 	} catch (error) {
 		return response.sendStatus(403);
-	}
-	
+	}	
 }
 
 const postRegister = async (request, response) => {
@@ -120,12 +134,12 @@ const postLogout = (request, response) => {
 	// If the token is verified it responds with a 200 status code
 	// If the user doesn't exist it responds with a 400 status code
 
-	let { access_token } = request.body;
-
 	try {
-		if (access_token == null) throw "No access token params";
-
-		jwt.verify(access_token, process.env.TOKEN_SECRET);
+		let access_token = request.headers.access_token;
+		
+		if(!getDataFromToken(access_token))
+			throw "Error";
+	
 
 		return response.sendStatus(200);
 
@@ -232,4 +246,4 @@ const postResetPassword = async (request, response) => {
 	}
 }
 
-module.exports = { postRegister, postLogin, postLogout, isAuthorized, getActivateAccount, postChangePassword };
+module.exports = { postRegister, postLogin, postLogout, postIsAuthorized, getActivateAccount, postChangePassword, getDataFromToken };

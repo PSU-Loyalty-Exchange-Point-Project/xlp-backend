@@ -16,7 +16,7 @@ router.post('/login', accountController.postLogin);
 
 router.post('/logout', accountController.postLogout);
 
-router.post('/check-authorization', accountController.isAuthorized);
+router.post('/check-authorization', accountController.postIsAuthorized);
 
 router.post('/change-password', accountController.postChangePassword);
 

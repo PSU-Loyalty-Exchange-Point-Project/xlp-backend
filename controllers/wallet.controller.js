@@ -32,14 +32,6 @@ const computeBalance = async (walletId) => {
 
 }
 
-// const viewBalance = async (userId) => {
-//     let wallet = await Wallet.findOne({ where: { UserId: userId } });
-//     if (!wallet)
-//         return null;
-    
-//     return { id: wallet.id, balance: wallet.balance }
-// }
-
 const deductBalance = async (userId, amount) => {
     let originalBalance;
     let wallet = await Wallet.findOne({ where: { UserId: userId } });

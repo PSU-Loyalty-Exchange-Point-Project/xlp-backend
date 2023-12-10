@@ -38,7 +38,9 @@ const getVerifyOTP = async (request, response) => {
 	try {
 		let userId = atob(uid);
 		let user = await User.findOne({ where: { id: userId } });
-		
+		if (!user)
+            throw "UID error";
+            
 		return response.status(200).send({ userPhoneNumber: user.obscuredPhoneNumber() });
 		
 	} catch (error) {
@@ -48,14 +50,17 @@ const getVerifyOTP = async (request, response) => {
 }
 
 const postVerifyOTP = async (request, response) => {
+    // Gets uid from endpoint params & code from request body
+    // converts uid from base64 string to normal string
+    // Gets uid
+
     let uid = request.params.uid;
     let { code } = request.body;
 
     try {
-        // let user = await User.findOne({ where: { phoneNumber: phoneNumber, status: 'inactive' } });
         let userId = atob(uid);
         let user = await User.findOne({ where: { id: userId } });
-        
+
         if (!user)
             throw "Invalid OTP";
 
@@ -85,13 +90,14 @@ const postVerifyOTP = async (request, response) => {
             user.setPhoneVerifiedStatus();
             token.sendToken();
 
-            return response.send({ message: "OTP confirmed" });
+            return response.send({ redirectLocation: '/account/login', message: "OTP confirmed" });
 
         } else if (user.status == 'active') {
             // OTP sent in login
             let generatedAccessToken = generateAccessToken(user.id);
 
             return response.status(200).send({ 
+                redirectLocation: '/dashboard',
                 headers: {
                     access_token: { 
                         token: generatedAccessToken, 

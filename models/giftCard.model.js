@@ -26,7 +26,7 @@ GiftCard.init({
         defaultValue: DataTypes.UUIDV4
     },
     number: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.STRING,
         unique: true
     },
@@ -56,13 +56,13 @@ GiftCard.init({
     },
     expiresAt: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: true
     }
 }, {
     sequelize
 });
 
-GiftCard.beforeValidate(function(giftCard) { 
+GiftCard.beforeCreate(function(giftCard) { 
     let expireDate = new Date(new Date().getTime() + 31536000000); // 1 Year from the time of creation
 
     giftCard.number = GiftCard.generateGiftCardNumber();
