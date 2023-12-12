@@ -43,6 +43,7 @@ function applyExtraSetup(sequelize) {
   Reward.hasMany(RewardDiscountCode);
   Wallet.hasMany(Transaction);
   User.hasMany(OTPCode);
+  Reward.belongsToMany(User, { through: 'RewardHistory' });
 }
 
 applyExtraSetup(sequelize);
