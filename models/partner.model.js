@@ -19,3 +19,5 @@ Partner.init({
 }, {
     sequelize
 });
+
+module.exports = Partner;
