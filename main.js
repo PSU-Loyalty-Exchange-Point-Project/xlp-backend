@@ -11,9 +11,8 @@ const db = require('./models');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.json())
+app.use(express.json());
 
-const { viewBalance } = require('./controllers/wallet.controller');
 const { getDataFromToken } = require('./controllers/account.controller');
 
 
@@ -22,13 +21,14 @@ const accountRouter = require('./routers/account.router');
 const walletRouter = require('./routers/wallet.router');
 const transactionRouter = require('./routers/transaction.router');
 const giftCardRouter = require('./routers/giftCard.router');
+const rewardRouter = require('./routers/reward.router');
 
 app.use('/account', accountRouter);
 app.use('/wallet', walletRouter);
 app.use('/transaction', transactionRouter);
 app.use('/gift-card', giftCardRouter);
+app.use('/reward', rewardRouter);
 
-let { recomputeWallet } = require('./controllers/transaction.controller')
 
 const { User, Wallet } = require('./models');
 const { viewTransactionList } = require('./controllers/transaction.controller');
@@ -45,20 +45,21 @@ app.get('/dashboard', async (request, response) => {
 
 		let wallet = await Wallet.findOne({ where: { UserId: user.id } })
 		if (!wallet)
-			throw "User not found";
+			throw "Wallet not found";
 		
-		let transactions = await  viewTransactionList(wallet.id, 5, 0)
+		let transactions = await  viewTransactionList(wallet.id, 5, 0);
 		if (!transactions)
 			throw "Transactions not found";
 
-		return response.status(200).send({ balance: wallet.getBalance(), transactions: transactions })
-	
+		return response.status(200).send({ balance: wallet.getBalance(), transactions: transactions });
+
 	} catch (error) {
+		console.error(error);
 		return response.sendStatus(400);
 	}
 });
 
-db.sequelize.sync({ force: true }).then((request) => {
+db.sequelize.sync({ force: false }).then((request) => {
 	app.listen(PORT, () => {
 		console.log(`Express server started on port ${PORT}.`);
 	});
