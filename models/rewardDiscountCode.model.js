@@ -4,7 +4,10 @@ const { Reward } = require('./index');
 
 
 class RewardDiscountCode extends Model {
-
+    async redeem() {
+        this.status = "consumed";
+        await this.save();
+    }
 }
   
 
