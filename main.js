@@ -32,6 +32,7 @@ app.use('/reward', rewardRouter);
 
 const { User, Wallet } = require('./models');
 const { viewTransactionList } = require('./controllers/transaction.controller');
+const { rewardsList } = require('./controllers/reward.controller');
 
 
 app.get('/dashboard', async (request, response) => {
@@ -50,8 +51,12 @@ app.get('/dashboard', async (request, response) => {
 		let transactions = await  viewTransactionList(wallet.id, 5, 0);
 		if (!transactions)
 			throw "Transactions not found";
+		
+		let rewards = await  rewardsList();
+		if (!rewards)
+			throw "Rewards not found";
 
-		return response.status(200).send({ balance: wallet.getBalance(), transactions: transactions });
+		return response.status(200).send({ balance: wallet.getBalance(), transactions: transactions, rewards: rewards });
 
 	} catch (error) {
 		console.error(error);

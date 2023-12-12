@@ -109,4 +109,4 @@ const postRedeemDiscountCodeReward = async (request, response) => {
     }
 }
 
-module.exports = { postCreateGiftCardReward, postCreateDiscountCodeReward, postRedeemGiftCardReward, postRedeemDiscountCodeReward, getRewardsList };
+module.exports = { rewardsList, postCreateGiftCardReward, postCreateDiscountCodeReward, postRedeemGiftCardReward, postRedeemDiscountCodeReward, getRewardsList };
