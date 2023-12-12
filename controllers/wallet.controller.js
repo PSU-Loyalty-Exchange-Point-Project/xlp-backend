@@ -17,20 +17,20 @@ const createWallet = async (userObject) =>  {
     }
 };
 
-const computeBalance = async (walletId) => {
-    try {
-        let wallet = await Wallet.findOne({ where: { id: walletId } });
+// const computeBalance = async (walletId) => {
+//     try {
+//         let wallet = await Wallet.findOne({ where: { id: walletId } });
         
-        if (!wallet)
-            throw "Wallet not found"
+//         if (!wallet)
+//             throw "Wallet not found"
 
         
         
-    } catch (error) {
-        return error;
-    }
+//     } catch (error) {
+//         return error;
+//     }
 
-}
+// }
 
 const deductBalance = async (userId, amount) => {
     let originalBalance;
@@ -42,6 +42,9 @@ const deductBalance = async (userId, amount) => {
 
         originalBalance = wallet.balance;
 
+        if (originalBalance < amount)
+            throw "User has insufficient points";
+
         if (!Number.isInteger(amount))
             throw "Number must be an integer";
 
@@ -51,14 +54,14 @@ const deductBalance = async (userId, amount) => {
             throw "Deposit was not processed correctly";
 
 
-        // await createTransaction(amount, "deduct", null, wallet);
+        await createTransaction(amount, "withdraw", null, wallet.id);
 
-        // recomputeWallet(wallet.id);
+        recomputeWallet(wallet.id); 
 
         return {success: true};    
     } catch (error) {
         console.error(error);
-        // await createTransaction(amount, "fail", error, wallet);
+        await createTransaction(amount, "fail", error, wallet.id);
     
         return {success: false, error: error};
     }
@@ -90,12 +93,12 @@ const addBalance = async (userId, amount, note=null) => {
             wallet.id
         );
 
-        // recomputeWallet(wallet.id);
+        recomputeWallet(wallet.id);
 
         return {success: true};    
     } catch (error) {
         console.error(error);
-        // await createTransaction(amount, "fail", error, wallet);
+        await createTransaction(amount, "fail", error, wallet);
         return {success: false, error: error};
     }
 }
@@ -148,4 +151,4 @@ const postAddBalance = async (request, response) => {
     }
 }
 
-module.exports = { createWallet, getUserWallet, postDeductBalance, postAddBalance, addBalance }
+module.exports = { createWallet, getUserWallet, postDeductBalance, postAddBalance, deductBalance, addBalance }
