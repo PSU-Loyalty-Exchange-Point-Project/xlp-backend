@@ -47,7 +47,7 @@ GiftCard.init({
     status: {
         type: DataTypes.ENUM(
             'valid', // Default value
-            'invalid', // If OTP was re-sent and it wasn't consumed
+            'invalid',
             'consumed',
             'expired' // If status was valid and time expired it is changed to
         ),
