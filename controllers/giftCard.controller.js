@@ -1,5 +1,6 @@
-const { GiftCard, Sequelize } = require('../models');
+const { GiftCard, User, Sequelize } = require('../models');
 const { addBalance } = require('./wallet.controller');
+const { getDataFromToken } = require('./account.controller');
 
 const postCreateGiftCard = async (request, response) => {
     let { value, price } = request.body;
@@ -19,9 +20,16 @@ const postCreateGiftCard = async (request, response) => {
 };
 
 const postRedeemGiftCard = async (request, response) => {
-    let { userId, giftCardNumber } = request.body;
-
+    let { giftCardNumber } = request.body;
+    
     try {
+        let access_token = request.headers.access_token;
+		let data = await getDataFromToken(access_token);
+
+		let user = await User.findOne({ where: { id: data.userId, status: "active"  } });
+        if (!user)
+            throw "User doesn't exist";
+
         let giftCard = await GiftCard.findOne({ 
             where: { 
                 number: giftCardNumber, 
@@ -35,7 +43,7 @@ const postRedeemGiftCard = async (request, response) => {
         if (!giftCard)
             throw "Unable to redeem gift card";
 
-        let transaction = await addBalance(userId, giftCard.value, `Redeemed gift card with ID: ${giftCard.id}`);    
+        let transaction = await addBalance(user.id, giftCard.value, `Redeemed gift card with ID: ${giftCard.id}`);    
         
         if (!transaction.success)
             throw transaction.error;
