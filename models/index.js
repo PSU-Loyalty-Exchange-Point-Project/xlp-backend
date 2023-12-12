@@ -34,11 +34,13 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 function applyExtraSetup(sequelize) {
-  
-	const { User, Token, OTPCode, Wallet, Transaction } = sequelize.models;
+  const { User, Token, OTPCode, Wallet, Transaction, Partner, Reward, RewardGiftCard, RewardDiscountCode } = sequelize.models;
 
   User.hasMany(Token);
   Wallet.belongsTo(User);
+  Partner.hasMany(Reward);
+  Reward.hasMany(RewardGiftCard);
+  Reward.hasMany(RewardDiscountCode);
   Wallet.hasMany(Transaction);
   User.hasMany(OTPCode);
 }

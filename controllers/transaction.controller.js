@@ -10,14 +10,7 @@ const createTransaction = async (transactionAmount, transactionType, transaction
             note: transactionNote,
             WalletId: walletId
         });
-        //  await Transaction.create(
-        //     { 
-        //         amount: transactionAmount, 
-        //         type: transactionType,
-        //         note: transactionNote
-        //     });
         await transaction.save();
-        // walletObject.addTransaction(transaction);
         
         if (!transaction)
             throw "Error creating transaction"
@@ -65,18 +58,23 @@ const viewTransactionList = async (walletId, transactionsPerPage, page) =>  {
 
 
 const getWalletTransactions = async (walletId) => {
+    let gainedPoints = 0;
+    let deductedPoints = 0; 
     let transactions = await Transaction.findAll({
         where: { WalletId: walletId },
         attributes: [
             'type',
             [sequelize.fn('sum', sequelize.col('amount')), 'total_amount'],
-          ],
-          raw: true,
-          group: ['type'],
+        ],
+        raw: true,
+        group: ['type'],
     });
 
-    let gainedPoints = transactions.find(({ type }) => type === "gain").total_amount;
-    let deductedPoints = transactions.find(({ type }) => type === "deduct").total_amount;
+    if (transactions.find(({ type }) => type === "deposit"))
+        gainedPoints = transactions.find(({ type }) => type === "deposit").total_amount;
+    
+    if (transactions.find(({ type }) => type == "withdraw"))
+        deductedPoints = transactions.find(({ type }) => type === "withdraw").total_amount;
 
     return { gainedPoints: gainedPoints, deductedPoints: deductedPoints}
 }

@@ -18,7 +18,9 @@ class Token extends Model {
             "Subject": `Verify Email Address for XLP`,
             "HtmlBody": `<strong>Hello ${user.name},</strong><br>
                         Click on the following link to activate your account:
-                        ${process.env.HOSTNAME}/account/activate/${uid}/${this.id}`,
+                        <a href="${process.env.FRONT_END_ADDRESS}/account/activate/${uid}/${this.id}">
+                            ${process.env.FRONT_END_ADDRESS}/account/activate/${uid}/${this.id}
+                        </a>`,
             "TextBody": `Hello ${user.name}, \n
             Click on the following link to activate your account:
             ${process.env.FRONT_END_ADDRESS}/account/activate/${uid}/${this.id}`,

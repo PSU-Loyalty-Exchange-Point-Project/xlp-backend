@@ -1,7 +1,7 @@
 const { request } = require('express');
 const { Token, Sequelize } = require('../models');
 
-const  createEmailVerificationToken = async (userId) =>  {
+const createEmailVerificationToken = async (userId) =>  {
     try {
         let token = await new Token({ UserId: userId});
         await token.save();
@@ -36,4 +36,4 @@ const verifyToken = async (tokenId, userId) => {
     }
 }
 
-module.exports = { verifyToken, createEmailVerificationToken }
+module.exports = { verifyToken, createEmailVerificationToken };

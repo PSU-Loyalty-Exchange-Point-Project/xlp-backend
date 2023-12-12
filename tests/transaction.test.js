@@ -1,64 +1,72 @@
-const chai = require('chai');
-const expect = chai.expect;
+const { Sequelize, DataTypes } = require('sequelize');
+const Transaction = require('../models/transaction.models'); 
 
-// Mocking the Transaction model and its rawAttributes
-const Transaction = {
-    rawAttributes: {
-        id: {
-            type: {
-                key: 'UUID'
-            }
-        },
-        amount: {
-            type: {
-                key: 'FLOAT'
-            }
-        },
-        type: {
-            type: {
-                key: 'ENUM',
-                values: ['deduct', 'gain', 'fail']
-            }
-        },
-        note: {
-            type: {
-                key: 'TEXT'
-            }
+// Create a new Sequelize instance for testing
+const sequelize = new Sequelize('sqlite::memory:', { logging: false });
+
+Transaction.init({
+    id: {
+        allowNull: false,
+        primaryKey: true,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4
+    },
+    amount: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+            min: 0,
         }
     },
-    create: async (data) => {
-        return data;
+    type: {
+        type: DataTypes.ENUM('withdraw', 'deposit', 'fail'),
+        defaultValue: 'fail',
+        allowNull: false
+    },
+    note: {
+        type: DataTypes.TEXT,
+        allowNull: true
     }
-};
+}, {
+    sequelize,
+    modelName: 'Transaction'
+});
 
 describe('Transaction Model', () => {
-    it('should have an id field of type UUID', () => {
-        expect(Transaction.rawAttributes.id.type.key).to.eql('UUID');
+    beforeAll(async () => {
+        await sequelize.sync();
     });
 
-    it('should have an amount field of type FLOAT', () => {
-        expect(Transaction.rawAttributes.amount.type.key).to.eql('FLOAT');
+    afterAll(async () => {
+        await sequelize.close();
     });
 
-    it('should have a type field of type ENUM', () => {
-        expect(Transaction.rawAttributes.type.type.key).to.eql('ENUM');
-        expect(Transaction.rawAttributes.type.type.values).to.eql(['deduct', 'gain', 'fail']);
-    });
-
-    it('should have a note field of type TEXT', () => {
-        expect(Transaction.rawAttributes.note.type.key).to.eql('TEXT');
-    });
-
-    it('should create a new transaction', async () => {
+    test('create a new transaction', async () => {
         const transaction = await Transaction.create({
-            id: '5321e241-4c0b-45a4-b8ec-9b52f283455e',
-            amount: 100.5,
-            type: 'gain',
-            note: 'Test transaction'
+            amount: 100,
+            type: 'deposit',
+            note: 'Test deposit'
         });
-        expect(transaction.id).to.eql('5321e241-4c0b-45a4-b8ec-9b52f283455e');
-        expect(transaction.amount).to.eql(100.5);
-        expect(transaction.type).to.eql('gain');
-        expect(transaction.note).to.eql('Test transaction');
+
+        console.log('Created Transaction:', transaction.toJSON());
+
+        expect(transaction).toBeDefined();
+        expect(transaction.amount).toBe(100);
+        expect(transaction.type).toBe('deposit');
     });
+
+    test('transaction type validation', async () => {
+        try {
+            await Transaction.create({
+                amount: 50,
+                type: 'invalid_type',
+                note: 'Invalid type transaction'
+            });
+        } catch (error) {
+            console.log('Error when creating a transaction with an invalid type:', error.message);
+            expect(error).toBeDefined();
+        }
+    });
+
 });

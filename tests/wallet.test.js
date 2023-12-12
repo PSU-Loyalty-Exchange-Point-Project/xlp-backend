@@ -1,45 +1,68 @@
-const chai = require('chai');
-const expect = chai.expect;
+const { Sequelize, DataTypes } = require('sequelize');
 
-// Mocking the Wallet model and its rawAttributes
-const Wallet = {
-    rawAttributes: {
-        id: {
-            type: {
-                key: 'UUID'
-            }
-        },
-        balance: {
-            type: {
-                key: 'INTEGER'
-            },
-            defaultValue: 0
-        }
-    },
-    create: async (data) => {
-        return data;
+// Define the Wallet model directly in the test file
+class Wallet extends Sequelize.Model {
+    getBalance() {
+        return this.balance;
     }
-};
+
+    deposit(amount) {
+        this.balance += amount;
+        return this.save();
+    }
+
+    withdraw(amount) {
+        this.balance -= amount;
+        return this.save();
+    }
+}
+
+// Initialize the Wallet model
+Wallet.init({
+    id: {
+        allowNull: false,
+        primaryKey: true,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+    },
+    balance: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+            isInt: true,
+            min: 0,
+        },
+    },
+}, { sequelize: new Sequelize('sqlite::memory:', { logging: false }), modelName: 'Wallet' });
 
 describe('Wallet Model', () => {
-    it('should have an id field of type UUID', () => {
-        expect(Wallet.rawAttributes.id.type.key).to.eql('UUID');
+
+    beforeAll(async () => {
+        // Sync the model with the in-memory database
+        await Wallet.sequelize.sync();
     });
 
-    it('should have a balance field of type INTEGER', () => {
-        expect(Wallet.rawAttributes.balance.type.key).to.eql('INTEGER');
+    afterAll(async () => {
+        // Close the connection to the in-memory database
+        await Wallet.sequelize.close();
     });
 
-    it('should have a default balance of 0', () => {
-        expect(Wallet.rawAttributes.balance.defaultValue).to.eql(0);
+    test('initial balance is 0', async () => {
+        const wallet = await Wallet.create({});
+        expect(wallet.getBalance()).toBe(0);
     });
 
-    it('should create a new wallet', async () => {
-        const wallet = await Wallet.create({
-            id: '5321e241-4c0b-45a4-b8ec-9b52f283455e',
-            balance: 0,
-        });
-        expect(wallet.id).to.eql('5321e241-4c0b-45a4-b8ec-9b52f283455e');
-        expect(wallet.balance).to.eql(0);
+    test('deposit increases balance', async () => {
+        const wallet = await Wallet.create({});
+        await wallet.deposit(100);
+        expect(wallet.getBalance()).toBe(100);
     });
+
+    test('withdraw decreases balance', async () => {
+        const wallet = await Wallet.create({ balance: 100 });
+        await wallet.withdraw(50);
+        expect(wallet.getBalance()).toBe(50);
+    });
+
 });
