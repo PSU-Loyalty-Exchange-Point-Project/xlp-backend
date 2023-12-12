@@ -1,5 +1,5 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const Transaction = require('../models/transaction.models'); // Adjust this path to the location of your Transaction model
+const Transaction = require('../models/transaction.models'); 
 
 // Create a new Sequelize instance for testing
 const sequelize = new Sequelize('sqlite::memory:', { logging: false });
