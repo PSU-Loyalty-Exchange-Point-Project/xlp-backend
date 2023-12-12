@@ -1,13 +1,11 @@
-const { request } = require('express');
 const { GiftCard, Sequelize } = require('../models');
-const { addBalance } = require('./wallet.controller')
+const { addBalance } = require('./wallet.controller');
 
 const postCreateGiftCard = async (request, response) => {
     let { value, price } = request.body;
 
     try {
         let giftCard = await GiftCard.create({ value: value, price: price });
-        giftCard.save(); // Might not be necessary
 
         if (!giftCard)
             throw "Unable to create gift card";

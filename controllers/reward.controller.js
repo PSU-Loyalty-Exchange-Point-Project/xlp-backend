@@ -1,4 +1,3 @@
-const { request, response } = require('express');
 const { Partner, Reward, RewardGiftCard, RewardDiscountCode } = require('../models');
 const { deductBalance } = require('./wallet.controller');
 

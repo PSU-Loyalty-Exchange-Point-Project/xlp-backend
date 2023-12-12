@@ -1,4 +1,3 @@
-const { request, response } = require('express');
 const { Wallet } = require('../models');
 const { createTransaction, recomputeWallet } = require('./transaction.controller');
 
@@ -8,7 +7,6 @@ const createWallet = async (userObject) =>  {
         let wallet = await Wallet.create();
         wallet.setUser(userObject);
 
-        // wallet.save
         if (wallet == null)
             throw "Error creating a user wallet"
 
@@ -16,21 +14,6 @@ const createWallet = async (userObject) =>  {
         return error;
     }
 };
-
-// const computeBalance = async (walletId) => {
-//     try {
-//         let wallet = await Wallet.findOne({ where: { id: walletId } });
-        
-//         if (!wallet)
-//             throw "Wallet not found"
-
-        
-        
-//     } catch (error) {
-//         return error;
-//     }
-
-// }
 
 const deductBalance = async (userId, amount) => {
     let originalBalance;

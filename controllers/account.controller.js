@@ -91,7 +91,7 @@ const postRegister = async (request, response) => {
 
 		console.error(error);
 		
-		return	response.status(400).send({ message: error });
+		return response.status(400).send({ message: error });
 	}
 }
 

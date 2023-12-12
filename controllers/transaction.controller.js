@@ -1,4 +1,3 @@
-const { request } = require('express');
 const { Transaction, User, sequelize, Wallet } = require('../models');
 
 

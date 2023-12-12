@@ -1,4 +1,3 @@
-const { request } = require('express');
 const { Token, Sequelize } = require('../models');
 
 const createEmailVerificationToken = async (userId) =>  {

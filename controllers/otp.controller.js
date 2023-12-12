@@ -1,4 +1,3 @@
-const { request } = require('express');
 const { OTPCode, User, Sequelize } = require('../models');
 const { createEmailVerificationToken } = require('./token.controller');
 const jwt = require('jsonwebtoken');
