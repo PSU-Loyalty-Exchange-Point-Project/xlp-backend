@@ -29,6 +29,7 @@ const postIsAuthorized = async (request, response, next) => {
 	// If the user exists it responds with a 200 status code
 	// If the user doesn't exist it responds with a 403 status code
 
+
 	let { access_token } = request.body;
 	
 	try {
