@@ -34,8 +34,8 @@ const getRewardDetails = async (request, response) => {
 }
 
 const createGiftCardReward = async (partnerName, name, price, number) => {
-    let partner = await Partner.findOne({ name: partnerName }) || await Partner.create({ name: partnerName });
-    let reward = await Reward.findOne({ name: name, price: price, PartnerId: partner.id }) || await Reward.create({ name: name, price: price, PartnerId: partner.id });
+    let partner = await Partner.findOne({ where: { name: partnerName } }) || await Partner.create({ name: partnerName });
+    let reward = await Reward.findOne({ where: { name: name, price: price, PartnerId: partner.id }}) || await Reward.create({ name: name, price: price, PartnerId: partner.id });
 
     let giftCardReward = await RewardGiftCard.create({ number: number, RewardId: reward.id });
 
@@ -55,8 +55,8 @@ const postCreateGiftCardReward = async (request, response) => {
 }
 
 const createDiscountCodeReward = async (partnerName, name, price, code) => {
-    let partner = await Partner.findOne({ name: partnerName }) || await Partner.create({ name: partnerName });
-    let reward = await Reward.findOne({ name: name, price: price, PartnerId: partner.id }) || await Reward.create({ name: name, price: price, PartnerId: partner.id });
+    let partner = await Partner.findOne({ where: { name: partnerName } }) || await Partner.create({ name: partnerName });
+    let reward = await Reward.findOne({ where: { name: name, price: price, PartnerId: partner.id } }) || await Reward.create({ name: name, price: price, PartnerId: partner.id });
 
     let discountCodeReward = await RewardDiscountCode.create({ code: code, RewardId: reward.id })
     return discountCodeReward;
