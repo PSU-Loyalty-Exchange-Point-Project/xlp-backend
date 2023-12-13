@@ -1,5 +1,6 @@
-const { Partner, Reward, RewardGiftCard, RewardDiscountCode } = require('../models');
+const { User, Partner, Reward, RewardGiftCard, RewardDiscountCode } = require('../models');
 const { deductBalance } = require('./wallet.controller');
+const { getDataFromToken } = require('./account.controller');
 
 const rewardsList = async (rewardsPerPage = 9, page = 0) => {
     let rewards = await Reward.findAll({ 
@@ -16,6 +17,20 @@ const getRewardsList = async (request, response) => {
     let rewards = await rewardsList(rewardsPerPage, page);
 
     return response.send(rewards);
+}
+
+const getRewardDetails = async (request, response) => {
+    try {
+        let rewardId = request.params.rewardId;
+
+        let reward = await Reward.findOne({ where: { id: rewardId } });
+
+        return response.send(reward);
+    } catch (error) {
+
+        return response.status(400).send({ message: error });
+    }
+
 }
 
 const createGiftCardReward = async (partnerName, name, price, number) => {
@@ -60,9 +75,7 @@ const postCreateDiscountCodeReward = async (request, response) => {
 }
 
 
-const postRedeemGiftCardReward = async (request, response) => {
-    let { userId, rewardId } = request.body;
-    // TODO: Get user ID from the access_token
+const redeemGiftCardReward = async (rewardId, userId) => {
     try {
         let reward = await Reward.findOne({ where: { id: rewardId } });
         if (!reward)
@@ -77,16 +90,14 @@ const postRedeemGiftCardReward = async (request, response) => {
         giftCardReward.redeem();
 
 
-        return response.send(giftCardReward);
+        return giftCardReward;
 
     } catch (error) {
         console.error(error)
-        return response.status(400).send({ message: error });
+        return null;
     }
 }
-const postRedeemDiscountCodeReward = async (request, response) => {
-    let { userId, rewardId } = request.body;
-    // TODO: Get user ID from the access_token
+const redeemDiscountCodeReward = async (rewardId, userId) => {
     try {
         let reward = await Reward.findOne({ where: { id: rewardId } });
         if (!reward)
@@ -101,12 +112,47 @@ const postRedeemDiscountCodeReward = async (request, response) => {
             discountCodeReward.redeem();
 
 
-        return response.send(discountCodeReward);
+        return discountCodeReward;
 
     } catch (error) {
         console.error(error)
-        return response.status(400).send({ message: error });
+        return null;
     }
 }
 
-module.exports = { rewardsList, postCreateGiftCardReward, postCreateDiscountCodeReward, postRedeemGiftCardReward, postRedeemDiscountCodeReward, getRewardsList };
+const postRedeemReward = async (request, response) => {
+    try {
+        let rewardId = request.params.rewardId;
+        let reward = await Reward.findOne({ where: { id: rewardId } });
+        if (!reward)
+            throw "Reward not found";
+        let access_token = request.headers.access_token;
+		let data = await getDataFromToken(access_token);
+        let user = await User.findOne({ where: { id: data.userId, status: "active"  } });
+        console.log(user);
+        if (!user)
+            throw "User doesn't exist";
+        
+        let giftCardReward = await RewardGiftCard.findOne({ where: { RewardId: reward.id  } });
+        let discountCodeReward = await RewardDiscountCode.findOne({ where: { RewardId: reward.id  } });
+        let returnReturn;
+        
+        if (giftCardReward) {
+            returnReturn = await redeemGiftCardReward(reward.id, user.id);
+            
+        } else if (discountCodeReward) {
+            returnReturn = await redeemDiscountCodeReward(reward.id, user.id);
+        } else {
+            throw "Cannot redeem reward";
+        }
+        if (!returnReturn)
+            throw "Cannot redeem reward";
+        return response.send(returnReturn);
+    } catch (error) {
+
+        return response.status(400).send(error);
+    }
+}
+
+
+module.exports = { rewardsList, getRewardDetails, postCreateGiftCardReward, postCreateDiscountCodeReward, postRedeemReward, getRewardsList };
